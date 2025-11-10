@@ -14,7 +14,21 @@
 
   <hr class="my-4" style="width:100%; border-color:#cfd3db;">
 
+  {% if not current_user.is_authenticated %}
   <p style="font-size:1.15rem; font-weight:500;">Please login or create an account to begin.</p>
+  {% else %}
+  <p style="font-size:1.15rem; font-weight:500;">Welcome back! Use the navigation menu to access your dashboard and submit data.</p>
+  {% endif %}
+
+  <div class="mt-5 p-4" style="background:#f8f9fa; border-radius:12px; max-width:900px; margin:auto; border:1px solid #e5e7eb;">
+    <h5 class="mb-3" style="color:var(--navy);"><i class="bi bi-shield-check"></i> Data Privacy & Consent</h5>
+    <p style="font-size:0.95rem; text-align:left; color:var(--muted);">
+      This research platform collects and processes academic and health-related data for research purposes only. 
+      All data is stored securely and confidentially. Your participation is voluntary, and you may withdraw at any time. 
+      By using this platform, you consent to the collection and analysis of your submitted data in accordance with 
+      ethical research standards and data protection regulations.
+    </p>
+  </div>
 
 </div>
 
