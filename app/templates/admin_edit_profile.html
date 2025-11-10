@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Edit Student Profile</h3>
+<p><strong>Profile ID:</strong> {{ profile.id }} | <strong>User ID:</strong> {{ profile.user_id }} | <strong>Name:</strong> {{ profile.name or "—" }}</p>
+
+<form method="POST" action="{{ url_for('admin.update_profile', profile_id=profile.id) }}" class="mt-3">
+  <div class="mb-3">
+    <label class="form-label">Clinical Diagnosis</label>
+    <select name="clinical_diagnosis" class="form-select">
+      <option value="" {{ "" == (profile.clinical_diagnosis or "") and "selected" or "" }}>—</option>
+      <option value="Diagnosed" {{ "Diagnosed" == (profile.clinical_diagnosis or "") and "selected" or "" }}>Diagnosed</option>
+      <option value="Suspected" {{ "Suspected" == (profile.clinical_diagnosis or "") and "selected" or "" }}>Suspected</option>
+      <option value="Not Diagnosed" {{ "Not Diagnosed" == (profile.clinical_diagnosis or "") and "selected" or "" }}>Not Diagnosed</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">PCOS Awareness Score</label>
+    <input type="number" step="0.01" name="pcos_awareness_score" class="form-control"
+           value="{{ profile.pcos_awareness_score if profile.pcos_awareness_score is not none }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">PCOS Symptoms Score</label>
+    <input type="number" step="0.01" name="pcos_symptoms_score" class="form-control"
+           value="{{ profile.pcos_symptoms_score if profile.pcos_symptoms_score is not none }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Academic Pressure Score</label>
+    <input type="number" step="0.01" name="academic_pressure_score" class="form-control"
+           value="{{ profile.academic_pressure_score if profile.academic_pressure_score is not none }}">
+  </div>
+
+  <button class="btn btn-primary">Save</button>
+  <a class="btn btn-secondary" href="{{ url_for('admin.view_data') }}">Back to Dataset</a>
+</form>
+{% endblock %}

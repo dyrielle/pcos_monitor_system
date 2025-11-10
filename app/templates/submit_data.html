@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row justify-content-center mt-4">
+  <div class="col-lg-8 col-md-10">
+    <h3 class="mb-3">Submit Periodic Entry</h3>
+    <p class="text-muted">
+      This form is for regular updates (weekly/biweekly/as needed). Your one-time baseline was already collected in Profile Setup.
+    </p>
+
+    <form method="POST" action="{{ url_for('main.submit_data') }}">
+
+      <!-- Academic Record -->
+      <div class="card mb-4">
+        <div class="card-header"><strong>Academic Record (optional)</strong></div>
+        <div class="card-body">
+
+          <div class="row g-3">
+
+            <div class="col-md-4">
+              <label class="form-label">Academic Year</label>
+              <select class="form-select" name="academic_year">
+                <option value="">-- Select AY --</option>
+                <option value="AY 2025-2026">AY 2025-2026</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Semester</label>
+              <select class="form-select" name="semester">
+                <option value="">-- Select --</option>
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Grading Period</label>
+              <select class="form-select" name="grading_period">
+                <option value="">-- Select --</option>
+                <option value="Midterm">Midterm</option>
+                <option value="Finals">Finals</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-3">
+              <label class="form-label">GPA</label>
+              <input type="number" step="0.01" min="0" max="5" class="form-control" name="gpa">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Attendance %</label>
+              <input type="number" step="0.1" min="0" max="100" class="form-control" name="attendance">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Study Hours/week</label>
+              <input type="number" step="0.1" min="0" class="form-control" name="study_hours">
+            </div>
+          </div>
+
+          <small class="text-muted">Note: Academic record fields are optional but recommended each grading period.</small>
+        </div>
+      </div>
+
+      <!-- Short Survey -->
+      <div class="card mb-4">
+        <div class="card-header"><strong>Short Survey (today)</strong></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Fatigue (1–5)</label>
+              <input type="number" name="fatigue" class="form-control" min="1" max="5" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Mood Swings (1–5)</label>
+              <input type="number" name="mood" class="form-control" min="1" max="5" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Sleep Quality (1–5)</label>
+              <input type="number" name="sleepq" class="form-control" min="1" max="5" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Academic Stress (1–5)</label>
+              <input type="number" name="stress" class="form-control" min="1" max="5" required>
+            </div>
+          </div>
+
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="irregular" name="irregular">
+            <label class="form-check-label" for="irregular">Irregular menstruation recently</label>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="acne" name="acne">
+            <label class="form-check-label" for="acne">Notable acne flare-up</label>
+          </div>
+
+          <div>
+            <label class="form-label">Notes (optional)</label>
+            <textarea class="form-control" name="notes" rows="3" placeholder="Anything you want to add…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-success">Save Entry</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">Back to Home</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+{% endblock %}

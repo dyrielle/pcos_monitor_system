@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>PCOS Population Analytics</h2>
+<p class="text-muted">This page shows dataset-level analysis for research (Admin only).</p>
+
+<hr>
+
+<h4>Mean Composite Scores by Diagnosis Group</h4>
+{% if group_means is defined and group_means is not none and group_means|length > 0 %}
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Diagnosis Group</th>
+      <th>PCOS Awareness Mean</th>
+      <th>Academic Pressure Mean</th>
+      <th>Symptoms Mean</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in group_means.itertuples() %}
+    <tr>
+      <td>{{ row.diagnosis }}</td>
+      <td>{{ "%.3f"|format(row.awareness) if row.awareness is not none else "—" }}</td>
+      <td>{{ "%.3f"|format(row.academic_pressure) if row.academic_pressure is not none else "—" }}</td>
+      <td>{{ "%.3f"|format(row.symptoms) if row.symptoms is not none else "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No baseline data yet.</p>
+{% endif %}
+
+<hr>
+
+<h4>Spearman Correlation Results</h4>
+<p>
+  <strong>Symptoms ↔ Academic Pressure:</strong>
+  {{ "%.3f"|format(corr_sym_acad) if corr_sym_acad is not none else "Not enough data yet" }}
+</p>
+<p>
+  <strong>Symptoms ↔ GPA (average per student):</strong>
+  {{ "%.3f"|format(corr_sym_gpa) if corr_sym_gpa is not none else "Not enough data yet" }}
+</p>
+
+<hr>
+
+<a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary">Back to Admin Panel</a>
+
+{% endblock %}

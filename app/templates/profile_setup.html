@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mt-3">
+  <h3 class="mb-2">Baseline Profile Setup</h3>
+  <p class="text-muted mb-3">
+    Hi {{ profile.name or 'Student' }}, please answer these one-time baseline questions.<br>
+    Scale: <strong>1</strong> = Strongly Disagree, <strong>2</strong> = Disagree, <strong>3</strong> = Neutral,
+    <strong>4</strong> = Agree, <strong>5</strong> = Strongly Agree.
+  </p>
+
+  <form method="POST" action="{{ url_for('main.profile_setup') }}">
+
+    <!-- Clinical Diagnosis (full width) -->
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header"><strong>Clinical Diagnosis</strong></div>
+          <div class="card-body">
+            <label class="form-label">Do you have a clinical diagnosis of PCOS?</label>
+            <select name="clinical_diagnosis" class="form-select" required>
+              <option value="" selected disabled>— Select one —</option>
+              <option value="Diagnosed">Diagnosed</option>
+              <option value="Suspected">Suspected</option>
+              <option value="Not Diagnosed">Not Diagnosed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Three-column layout -->
+    <div class="row g-3">
+
+      <!-- LEFT: Awareness (5) -->
+      <div class="col-12 col-lg-4">
+        <div class="card h-100">
+          <div class="card-header"><strong>PCOS Awareness (5 items)</strong></div>
+          <div class="card-body">
+
+            <!-- awareness_1 -->
+            <div class="mb-3">
+              <label class="form-label">1) I am familiar with the term Polycystic Ovary Syndrome (PCOS).</label>
+              <select name="awareness_1" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- awareness_2 (corrected text you approved) -->
+            <div class="mb-3">
+              <label class="form-label">2) I know the common symptoms of PCOS, like irregular periods.</label>
+              <select name="awareness_2" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- awareness_3 -->
+            <div class="mb-3">
+              <label class="form-label">3) I understand that PCOS can affect both physical and mental health.</label>
+              <select name="awareness_3" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- awareness_4 -->
+            <div class="mb-3">
+              <label class="form-label">4) I am aware of the possible treatments/management strategies for PCOS.</label>
+              <select name="awareness_4" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- awareness_5 -->
+            <div class="mb-0">
+              <label class="form-label">5) I believe PCOS can affect academic performance.</label>
+              <select name="awareness_5" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE: Academic Pressure (3) -->
+      <div class="col-12 col-lg-4">
+        <div class="card h-100">
+          <div class="card-header"><strong>Academic Pressure (3 items)</strong></div>
+          <div class="card-body">
+
+            <!-- academic_1 -->
+            <div class="mb-3">
+              <label class="form-label">1) I often feel academic pressure due to heavy workloads.</label>
+              <select name="academic_1" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- academic_2 -->
+            <div class="mb-3">
+              <label class="form-label">2) Stress from my academic environment affects my health and well-being.</label>
+              <select name="academic_2" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- academic_3 -->
+            <div class="mb-0">
+              <label class="form-label">3) Professors and school administrators are understanding when health issues affect my performance.</label>
+              <select name="academic_3" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: PCOS-related Symptoms Impact (5) -->
+      <div class="col-12 col-lg-4">
+        <div class="card h-100">
+          <div class="card-header"><strong>PCOS-related Symptoms Impact (5 items)</strong></div>
+          <div class="card-body">
+
+            <!-- symptoms_1 -->
+            <div class="mb-3">
+              <label class="form-label">1) I sometimes experience PCOS-related symptoms (such as fatigue, irregular periods, or mood changes) that affect my academic work.</label>
+              <select name="symptoms_1" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- symptoms_2 -->
+            <div class="mb-3">
+              <label class="form-label">2) Fatigue or sleep problems affect my ability to concentrate on schoolwork.</label>
+              <select name="symptoms_2" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- symptoms_3 -->
+            <div class="mb-3">
+              <label class="form-label">3) I feel anxious about how PCOS-related symptoms might impact my studies.</label>
+              <select name="symptoms_3" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- symptoms_4 -->
+            <div class="mb-3">
+              <label class="form-label">4) I sometimes miss deadlines or classes because of PCOS-related physical or emotional difficulties.</label>
+              <select name="symptoms_4" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+            <!-- symptoms_5 -->
+            <div class="mb-0">
+              <label class="form-label">5) My academic performance is sometimes influenced by my physical or emotional well-being.</label>
+              <select name="symptoms_5" class="form-select" required>
+                <option value="" selected disabled>Choose 1–5</option>
+                <option value="1">1 — Strongly Disagree</option>
+                <option value="2">2 — Disagree</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Agree</option>
+                <option value="5">5 — Strongly Agree</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- /row -->
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn btn-success" type="submit">Save Baseline</button>
+      <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}

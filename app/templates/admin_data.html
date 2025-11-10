@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Full Research Dataset</h2>
+<p>This page shows ALL collected student data for research analysis. Access restricted to administrators.</p>
+
+<h4>Student Profiles</h4>
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>User ID</th>
+      <th>Name</th>
+      <th>Diagnosis</th>
+      <th>Awareness Score</th>
+      <th>Symptoms Score</th>
+      <th>Academic Pressure Score</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in profiles %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.user_id }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.clinical_diagnosis }}</td>
+      <td>{{ p.pcos_awareness_score }}</td>
+      <td>{{ p.pcos_symptoms_score }}</td>
+      <td>{{ p.academic_pressure_score }}</td>
+      td>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_profile', profile_id=p.id) }}">Edit</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Academic Records</h4>
+<table class="table table-bordered table-striped">
+  <thead><tr><th>ID</th><th>Profile ID</th><th>Term</th><th>GPA</th><th>Attendance</th><th>Study Hours</th></tr></thead>
+  <tbody>
+    {% for a in academic %}
+    <tr>
+      <td>{{ a.id }}</td>
+      <td>{{ a.profile_id }}</td>
+      <td>{{ a.term }}</td>
+      <td>{{ a.gpa }}</td>
+      <td>{{ a.attendance_percent }}</td>
+      <td>{{ a.study_hours_per_week }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Survey Responses</h4>
+<table class="table table-bordered table-striped">
+  <thead><tr><th>ID</th><th>Profile ID</th><th>Date</th><th>Fatigue</th><th>Mood</th><th>Stress</th><th>Notes</th></tr></thead>
+  <tbody>
+    {% for s in surveys %}
+    <tr>
+      <td>{{ s.id }}</td>
+      <td>{{ s.profile_id }}</td>
+      <td>{{ s.date }}</td>
+      <td>{{ s.fatigue }}</td>
+      <td>{{ s.mood_swings }}</td>
+      <td>{{ s.perceived_academic_stress }}</td>
+      <td>{{ s.notes }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4 text-center">Admin Control Panel</h2>
+<p class="text-muted text-center mb-4">
+Manage research dataset, analytics, charts, and exports.
+</p>
+
+<div class="d-flex justify-content-center gap-3 flex-wrap">
+
+  <!-- DATASET TABLES -->
+  <a href="{{ url_for('admin.view_data') }}" class="btn pill-btn pill-blue px-4 py-3" style="min-width:200px;">
+    📄 Dataset Tables
+  </a>
+
+  <!-- ANALYTICS SUMMARY -->
+  <a href="{{ url_for('admin.analytics_page') }}" class="btn pill-btn pill-green px-4 py-3" style="min-width:200px;">
+    📊 Analytics Summary
+  </a>
+
+  <!-- SCATTER PLOTS -->
+  <a href="{{ url_for('admin.charts_page') }}" class="btn pill-btn pill-yellow px-4 py-3" style="min-width:200px;">
+    📈 Charts / Scatter Plots
+  </a>
+
+  <!-- EXPORT CSV -->
+  <a href="{{ url_for('admin.export_csv') }}" class="btn pill-btn pill-red px-4 py-3" style="min-width:200px;">
+    ⬇ Export CSV
+  </a>
+
+</div>
+
+<hr class="mt-5">
+
+<p class="text-center text-muted" style="font-size:.9rem;">
+You are viewing the research administration panel. Restricted to authorized administrators only.
+</p>
+
+{% endblock %}

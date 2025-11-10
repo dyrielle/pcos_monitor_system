@@ -1,0 +1,144 @@
+    {% extends "base.html" %}
+    {% block content %}
+
+    <h2>Interactive Scatter Plots (Population)</h2>
+    <p class="text-muted">
+    Correlations shown regardless of diagnosis. Hover a point to see <em>profile_id</em> and <em>diagnosis</em>. Lines are OLS trendlines.
+    </p>
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <hr>
+
+    <div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <strong>Awareness vs Academic Pressure</strong>
+        </div>
+        <div class="card-body">
+            <div id="sc_awareness_pressure" style="width:100%;height:420px;"></div>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <strong>Awareness vs PCOS-related Symptoms</strong>
+        </div>
+        <div class="card-body">
+            <div id="sc_awareness_symptoms" style="width:100%;height:420px;"></div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <strong>PCOS-related Symptoms vs Academic Pressure</strong>
+        </div>
+        <div class="card-body">
+            <div id="sc_symptoms_pressure" style="width:100%;height:420px;"></div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary">Back to Admin Panel</a>
+
+    <pre>{{ rows }}</pre>
+
+    <script>
+    // ----- Data from Flask -----
+    const rows = {{ rows | tojson }};
+
+    // Utility: filter rows with both fields present (not null/undefined)
+    function pairData(rows, xKey, yKey) {
+        const X = [], Y = [], text = [];
+        for (const r of rows) {
+        const xv = r[xKey], yv = r[yKey];
+        if (xv !== null && xv !== undefined && yv !== null && yv !== undefined) {
+            X.push(xv);
+            Y.push(yv);
+            // Hover text: profile_id + diagnosis
+            text.push(`profile_id: ${r.profile_id}<br>diagnosis: ${r.diagnosis}`);
+        }
+        }
+        return { X, Y, text };
+    }
+
+    // Compute simple OLS trendline (y = m*x + b)
+    function ols(X, Y) {
+        const n = X.length;
+        if (n < 2) return null;
+        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (let i = 0; i < n; i++) {
+        const x = X[i], y = Y[i];
+        sumX += x; sumY += y; sumXY += x*y; sumXX += x*x;
+        }
+        const denom = (n * sumXX - sumX * sumX);
+        if (denom === 0) return null;
+        const m = (n * sumXY - sumX * sumY) / denom;
+        const b = (sumY - m * sumX) / n;
+
+        const xMin = Math.min(...X), xMax = Math.max(...X);
+        const lineX = [xMin, xMax];
+        const lineY = [m * xMin + b, m * xMax + b];
+        return { m, b, lineX, lineY };
+    }
+
+    // Plot helper (white minimal style)
+    function drawScatter(divId, X, Y, text, xLabel, yLabel) {
+        if (X.length < 2) {
+        document.getElementById(divId).innerHTML =
+            '<div class="text-muted">Not enough data yet.</div>';
+        return;
+        }
+
+        const points = {
+        x: X, y: Y, text: text,
+        mode: 'markers',
+        type: 'scatter',
+        hovertemplate: '%{text}<br>' + xLabel + ': %{x:.3f}<br>' + yLabel + ': %{y:.3f}<extra></extra>',
+        marker: { size: 8 }
+        };
+
+        const model = ols(X, Y);
+        const trend = model ? {
+        x: model.lineX,
+        y: model.lineY,
+        mode: 'lines',
+        name: 'OLS Trendline',
+        line: { width: 2 }
+        } : null;
+
+        const data = trend ? [points, trend] : [points];
+
+        const layout = {
+        paper_bgcolor: 'white',
+        plot_bgcolor: 'white',
+        margin: { t: 20, r: 20, b: 50, l: 55 },
+        xaxis: { title: xLabel, zeroline: false },
+        yaxis: { title: yLabel, zeroline: false },
+        showlegend: false
+        };
+
+        Plotly.newPlot(divId, data, layout, {displaylogo:false, responsive:true});
+    }
+
+    // ---- Build each plot ----
+    const ap = pairData(rows, 'awareness', 'academic_pressure');
+    drawScatter('sc_awareness_pressure', ap.X, ap.Y, ap.text, 'PCOS Awareness', 'Academic Pressure');
+
+    const as_ = pairData(rows, 'awareness', 'symptoms');
+    drawScatter('sc_awareness_symptoms', as_.X, as_.Y, as_.text, 'PCOS Awareness', 'PCOS-related Symptoms');
+
+    const sp = pairData(rows, 'symptoms', 'academic_pressure');
+    drawScatter('sc_symptoms_pressure', sp.X, sp.Y, sp.text, 'PCOS-related Symptoms', 'Academic Pressure');
+    </script>
+
+    {% endblock %}
