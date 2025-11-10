@@ -24,11 +24,18 @@ def view_data():
 
     from .models import StudentProfile, AcademicRecord, SurveyResponse
 
-    profiles = StudentProfile.query.all()
+    # Get page number from query parameter, default to 1
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+
+    # Paginate profiles
+    profiles_pagination = StudentProfile.query.paginate(page=page, per_page=per_page, error_out=False)
+    profiles = profiles_pagination.items
+
     academic = AcademicRecord.query.all()
     surveys = SurveyResponse.query.all()
 
-    return render_template("admin_data.html", profiles=profiles, academic=academic, surveys=surveys)
+    return render_template("admin_data.html", profiles=profiles, academic=academic, surveys=surveys, pagination=profiles_pagination)
 
 
 @admin_bp.route("/export_csv")
