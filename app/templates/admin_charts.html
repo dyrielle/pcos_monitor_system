@@ -48,6 +48,49 @@
     </div>
     </div>
 
+    <!-- NEW: Correlation Heatmap Section -->
+    <hr class="my-5">
+
+    <h3>Correlation Heatmap</h3>
+    <p class="text-muted">
+        Pearson correlation between all numeric variables. Values range from -1 (negative correlation) to +1 (positive correlation).
+    </p>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>Variable Correlation Matrix</strong>
+                </div>
+                <div class="card-body">
+                    <div id="correlation_heatmap" style="width:100%;height:600px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Diagnosis Group Heatmap Section -->
+    <hr class="my-5">
+
+    <h3>Symptom Severity by Diagnosis Group</h3>
+    <p class="text-muted">
+        Average values of health and academic metrics grouped by clinical diagnosis status. 
+        Helps identify which symptoms are most prevalent in each diagnosis group.
+    </p>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>Mean Metrics by Diagnosis Group</strong>
+                </div>
+                <div class="card-body">
+                    <div id="diagnosis_heatmap" style="width:100%;height:500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary">Back to Admin Panel</a>
 
     <script>
@@ -137,6 +180,124 @@
 
     const sp = pairData(rows, 'symptoms', 'academic_pressure');
     drawScatter('sc_symptoms_pressure', sp.X, sp.Y, sp.text, 'PCOS-related Symptoms', 'Academic Pressure');
+
+    // ----- CORRELATION HEATMAP -----
+    const correlationLabels = {{ correlation_labels | tojson }};
+    const correlationValues = {{ correlation_values | tojson }};
+
+    if (correlationLabels && correlationLabels.length > 0 && correlationValues && correlationValues.length > 0) {
+        const heatmapData = [{
+            z: correlationValues,
+            x: correlationLabels,
+            y: correlationLabels,
+            type: 'heatmap',
+            colorscale: [
+                [0, '#3D5A80'],      // Dark blue (negative correlation)
+                [0.5, '#EE6C4D'],    // White (no correlation)
+                [1, '#98C1D9']       // Light blue (positive correlation)
+            ],
+            zmin: -1,
+            zmax: 1,
+            colorbar: {
+                title: 'Correlation',
+                titleside: 'right'
+            },
+            hovertemplate: '%{y} ↔ %{x}<br>Correlation: %{z:.3f}<extra></extra>',
+            showscale: true
+        }];
+
+        const heatmapLayout = {
+            title: '',
+            xaxis: {
+                title: '',
+                tickangle: -45,
+                side: 'bottom'
+            },
+            yaxis: {
+                title: '',
+                autorange: 'reversed'
+            },
+            margin: {
+                l: 150,
+                r: 50,
+                t: 50,
+                b: 150
+            },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        };
+
+        const heatmapConfig = {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false
+        };
+
+        Plotly.newPlot('correlation_heatmap', heatmapData, heatmapLayout, heatmapConfig);
+    } else {
+        document.getElementById('correlation_heatmap').innerHTML = 
+            '<div class="text-center text-muted p-5">Not enough data to generate correlation heatmap. Need at least 2 variables with 2+ data points.</div>';
+    }
+
+    // ----- DIAGNOSIS GROUP HEATMAP -----
+    const diagnosisLabels = {{ diagnosis_labels | tojson }};
+    const metricLabels = {{ metric_labels | tojson }};
+    const diagnosisValues = {{ diagnosis_values | tojson }};
+
+    if (diagnosisLabels && diagnosisLabels.length > 0 && diagnosisValues && diagnosisValues.length > 0) {
+        const diagnosisHeatmapData = [{
+            z: diagnosisValues,
+            x: metricLabels,
+            y: diagnosisLabels,
+            type: 'heatmap',
+            colorscale: [
+                [0, '#FFFFFF'],      // White (low values)
+                [0.25, '#FFE5B4'],   // Peach
+                [0.5, '#FFB347'],    // Orange
+                [0.75, '#FF6347'],   // Tomato
+                [1, '#DC143C']       // Crimson (high values)
+            ],
+            colorbar: {
+                title: 'Mean Value',
+                titleside: 'right'
+            },
+            hovertemplate: '<b>%{y}</b><br>%{x}: %{z:.2f}<extra></extra>',
+            showscale: true
+        }];
+
+        const diagnosisLayout = {
+            title: '',
+            xaxis: {
+                title: 'Metrics',
+                tickangle: -45,
+                side: 'bottom'
+            },
+            yaxis: {
+                title: 'Diagnosis Group',
+                autorange: 'reversed'
+            },
+            margin: {
+                l: 150,
+                r: 100,
+                t: 50,
+                b: 180
+            },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff',
+            height: 400
+        };
+
+        const diagnosisConfig = {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false
+        };
+
+        Plotly.newPlot('diagnosis_heatmap', diagnosisHeatmapData, diagnosisLayout, diagnosisConfig);
+    } else {
+        document.getElementById('diagnosis_heatmap').innerHTML = 
+            '<div class="text-center text-muted p-5">Not enough data to generate diagnosis group heatmap. Need at least one diagnosis group with data.</div>';
+    }
     </script>
 
     {% endblock %}

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">📄 Research Reports</h2>
+    <p class="text-muted">Generate comprehensive research reports from collected data.</p>
+
+    <hr>
+
+    <!-- REPORT PREVIEW SECTION -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <strong>Report Preview</strong>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Population Summary -->
+                    <h5 class="mb-3">📊 Population Summary</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Students</h6>
+                                    <h3 class="text-primary">{{ report_data.summary.total_students }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Survey Responses</h6>
+                                    <h3 class="text-info">{{ report_data.summary.total_surveys }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Academic Records</h6>
+                                    <h3 class="text-success">{{ report_data.summary.total_academic_records }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Average Age</h6>
+                                    <h3 class="text-warning">{{ report_data.summary.avg_age or "N/A" }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnosis Breakdown -->
+                    {% if report_data.summary.diagnosis_breakdown %}
+                    <h6 class="mt-4 mb-2">Diagnosis Distribution</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Diagnosis</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for diagnosis, count in report_data.summary.diagnosis_breakdown.items() %}
+                            <tr>
+                                <td>{{ diagnosis }}</td>
+                                <td>{{ count }}</td>
+                                <td>{{ "%.1f"|format((count / report_data.summary.total_students) * 100) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    <!-- Baseline Scores -->
+                    {% if report_data.summary.avg_awareness_score %}
+                    <h6 class="mt-4 mb-2">Population Baseline Scores</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>PCOS Awareness:</strong> {{ report_data.summary.avg_awareness_score }}/5.0
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Academic Pressure:</strong> {{ report_data.summary.avg_academic_pressure }}/5.0
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Symptom Severity:</strong> {{ report_data.summary.avg_symptoms_score }}/5.0
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KEY FINDINGS -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <strong>🔍 Key Research Findings</strong>
+                </div>
+                <div class="card-body">
+                    {% if report_data.key_findings %}
+                    <ol>
+                        {% for finding in report_data.key_findings %}
+                        <li class="mb-2">{{ finding }}</li>
+                        {% endfor %}
+                    </ol>
+                    {% else %}
+                    <p class="text-muted">Insufficient data to generate key findings.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORRELATION ANALYSIS -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <strong>📈 Correlation Analysis</strong>
+                </div>
+                <div class="card-body">
+                    {% if report_data.correlations %}
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Variable Pair</th>
+                                <th>Coefficient (r)</th>
+                                <th>P-Value</th>
+                                <th>Interpretation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set correlation_labels = {
+                                'symptoms_vs_pressure': 'Symptoms ↔ Academic Pressure',
+                                'symptoms_vs_gpa': 'Symptoms ↔ GPA',
+                                'pressure_vs_gpa': 'Academic Pressure ↔ GPA',
+                                'fatigue_vs_attendance': 'Fatigue ↔ Attendance'
+                            } %}
+                            
+                            {% for key, data in report_data.correlations.items() %}
+                            <tr>
+                                <td>{{ correlation_labels[key] or key }}</td>
+                                <td>{{ data.coefficient }}</td>
+                                <td>{{ data.p_value }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if 'strong' in data.interpretation %}bg-danger
+                                        {% elif 'moderate' in data.interpretation %}bg-warning
+                                        {% elif 'weak' in data.interpretation %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ data.interpretation }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <p class="text-muted small">
+                        <i>Note: Spearman correlation coefficients range from -1 to +1. P-values < 0.05 indicate statistical significance.</i>
+                    </p>
+                    {% else %}
+                    <p class="text-muted">Insufficient data for correlation analysis.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSIS GROUP COMPARISON -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <strong>🏥 Diagnosis Group Comparison</strong>
+                </div>
+                <div class="card-body">
+                    {% if report_data.diagnosis_comparison %}
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Diagnosis Group</th>
+                                <th>Count</th>
+                                <th>Avg Awareness</th>
+                                <th>Avg Academic Pressure</th>
+                                <th>Avg Symptoms</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for diagnosis, data in report_data.diagnosis_comparison.items() %}
+                            <tr>
+                                <td><strong>{{ diagnosis }}</strong></td>
+                                <td>{{ data.count }}</td>
+                                <td>{{ data.avg_awareness or "N/A" }}</td>
+                                <td>{{ data.avg_pressure or "N/A" }}</td>
+                                <td>{{ data.avg_symptoms or "N/A" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No diagnosis group data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOWNLOAD SECTION -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <strong>📥 Download Report</strong>
+                </div>
+                <div class="card-body text-center">
+                    <p>Generate a comprehensive PDF report with all findings, statistics, and analysis.</p>
+                    
+                    <a href="{{ url_for('admin.generate_pdf_report') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-file-pdf"></i> Download PDF Report
+                    </a>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Report generated: {{ report_data.summary.date_generated }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary btn-lg">
+            🏠 Back to Admin Panel
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">My Health & Academic Dashboard</h2>
+    <p class="text-muted">Welcome, {{ personal_data.name }}! Here's your personal health and academic progress overview.</p>
+
+    <hr>
+
+    <!-- PROFILE SUMMARY CARDS -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Clinical Diagnosis</h6>
+                    <h4 class="fw-bold text-primary">{{ personal_data.clinical_diagnosis }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">PCOS Awareness Score</h6>
+                    <h4 class="fw-bold text-info">
+                        {{ "%.2f"|format(personal_data.awareness_score) if personal_data.awareness_score else "N/A" }}
+                    </h4>
+                    <small class="text-muted">Cohort avg: {{ cohort_stats.avg_awareness or "N/A" }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Academic Pressure</h6>
+                    <h4 class="fw-bold text-warning">
+                        {{ "%.2f"|format(personal_data.academic_pressure_score) if personal_data.academic_pressure_score else "N/A" }}
+                    </h4>
+                    <small class="text-muted">Cohort avg: {{ cohort_stats.avg_academic_pressure or "N/A" }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Symptoms Score</h6>
+                    <h4 class="fw-bold text-danger">
+                        {{ "%.2f"|format(personal_data.symptoms_score) if personal_data.symptoms_score else "N/A" }}
+                    </h4>
+                    <small class="text-muted">Cohort avg: {{ cohort_stats.avg_symptoms or "N/A" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACADEMIC STATISTICS -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>📚 Academic Statistics</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <h6 class="text-muted">Average GPA</h6>
+                            <h4>{{ academic_stats.avg_gpa or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6 class="text-muted">Average Attendance</h6>
+                            <h4>{{ academic_stats.avg_attendance or "N/A" }}%</h4>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6 class="text-muted">Avg Study Hours/Week</h6>
+                            <h4>{{ academic_stats.avg_study_hours or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6 class="text-muted">Total Records</h6>
+                            <h4>{{ academic_stats.total_records }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEALTH STATISTICS -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>❤️ Health Statistics</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Avg Fatigue</h6>
+                            <h4>{{ survey_stats.avg_fatigue or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Avg Mood</h6>
+                            <h4>{{ survey_stats.avg_mood or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Avg Sleep</h6>
+                            <h4>{{ survey_stats.avg_sleep or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Avg Stress</h6>
+                            <h4>{{ survey_stats.avg_stress or "N/A" }}</h4>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Total Surveys</h6>
+                            <h4>{{ survey_stats.total_surveys }}</h4>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h6 class="text-muted">Last Submission</h6>
+                            <h6 class="fw-bold text-primary">{{ last_submission or "None yet" }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACADEMIC TIMELINE CHART -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>📈 Academic Performance Over Time</strong>
+                </div>
+                <div class="card-body">
+                    <div id="academic_timeline_chart" style="width:100%;height:400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEALTH TIMELINE CHART -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>❤️ Health Metrics Over Time</strong>
+                </div>
+                <div class="card-body">
+                    <div id="health_timeline_chart" style="width:100%;height:400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('main.submit_data') }}" class="btn btn-primary btn-lg mx-2">
+            📝 Submit New Entry
+        </a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-lg mx-2">
+            🏠 Back to Home
+        </a>
+    </div>
+
+</div>
+
+<!-- Plotly CDN -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script>
+// ----- ACADEMIC TIMELINE CHART -----
+const academicTimeline = {{ academic_timeline | tojson }};
+
+if (academicTimeline && academicTimeline.length > 0) {
+    const dates = academicTimeline.map(d => d.date);
+    
+    const gpaTrace = {
+        x: dates,
+        y: academicTimeline.map(d => d.gpa),
+        name: 'GPA',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#4CAF50', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const attendanceTrace = {
+        x: dates,
+        y: academicTimeline.map(d => d.attendance),
+        name: 'Attendance %',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#2196F3', width: 2 },
+        marker: { size: 8 },
+        yaxis: 'y2'
+    };
+    
+    const studyTrace = {
+        x: dates,
+        y: academicTimeline.map(d => d.study_hours),
+        name: 'Study Hours/Week',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#FF9800', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const academicLayout = {
+        title: '',
+        xaxis: {
+            title: 'Date',
+            type: 'date'
+        },
+        yaxis: {
+            title: 'GPA / Study Hours',
+            side: 'left'
+        },
+        yaxis2: {
+            title: 'Attendance %',
+            side: 'right',
+            overlaying: 'y',
+            range: [0, 100]
+        },
+        hovermode: 'x unified',
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: 1.15,
+            orientation: 'h'
+        }
+    };
+    
+    Plotly.newPlot('academic_timeline_chart', [gpaTrace, attendanceTrace, studyTrace], academicLayout, {responsive: true});
+} else {
+    document.getElementById('academic_timeline_chart').innerHTML = 
+        '<div class="text-center text-muted p-5">No academic records yet. <a href="{{ url_for(\'main.submit_data\') }}">Submit your first entry!</a></div>';
+}
+
+// ----- HEALTH TIMELINE CHART -----
+const surveyTimeline = {{ survey_timeline | tojson }};
+
+if (surveyTimeline && surveyTimeline.length > 0) {
+    const surveyDates = surveyTimeline.map(d => d.date);
+    
+    const fatigueTrace = {
+        x: surveyDates,
+        y: surveyTimeline.map(d => d.fatigue),
+        name: 'Fatigue',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#F44336', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const moodTrace = {
+        x: surveyDates,
+        y: surveyTimeline.map(d => d.mood_swings),
+        name: 'Mood Swings',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#9C27B0', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const sleepTrace = {
+        x: surveyDates,
+        y: surveyTimeline.map(d => d.sleep_quality),
+        name: 'Sleep Quality',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#00BCD4', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const stressTrace = {
+        x: surveyDates,
+        y: surveyTimeline.map(d => d.academic_stress),
+        name: 'Academic Stress',
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#FF5722', width: 2 },
+        marker: { size: 8 }
+    };
+    
+    const healthLayout = {
+        title: '',
+        xaxis: {
+            title: 'Date',
+            type: 'date'
+        },
+        yaxis: {
+            title: 'Rating (1-5)',
+            range: [0, 6]
+        },
+        hovermode: 'x unified',
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: 1.15,
+            orientation: 'h'
+        }
+    };
+    
+    Plotly.newPlot('health_timeline_chart', [fatigueTrace, moodTrace, sleepTrace, stressTrace], healthLayout, {responsive: true});
+} else {
+    document.getElementById('health_timeline_chart').innerHTML = 
+        '<div class="text-center text-muted p-5">No health surveys yet. <a href="{{ url_for(\'main.submit_data\') }}">Submit your first entry!</a></div>';
+}
+</script>
+
+{% endblock %}

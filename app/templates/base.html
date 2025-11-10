@@ -78,6 +78,9 @@
     .pill-red{ background: #dc3545; color:#fff; }
     .pill-red:hover{ background:#bb2d3b; color:#fff; }
 
+    .pill-purple{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; }
+    .pill-purple:hover{ background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); transform: translateY(-2px); }
+
     .pill-light{ background: var(--silver); color:#111827; }
     .pill-light:hover{ background:#c8ccd3; color:#111827; }
 
@@ -134,6 +137,10 @@
 
             <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.submit_data') }}">Submit Data</a></li>
             <li class="nav-item"><a class="btn pill-btn pill-green" href="/dashboard/">Dashboard</a></li>
+            
+            {% if not current_user.is_admin %}
+            <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.student_dashboard') }}">My Dashboard</a></li>
+            {% endif %}
 
             {% if current_user.is_admin %}
             <li class="nav-item"><a class="btn pill-btn pill-yellow" href="{{ url_for('admin.admin_home') }}">Admin</a></li>

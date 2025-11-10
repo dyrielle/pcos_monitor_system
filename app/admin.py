@@ -392,12 +392,14 @@ def charts_page():
     if not current_user.is_admin:
         return "Access denied", 403
 
-    from .models import StudentProfile
+    from .models import StudentProfile, AcademicRecord, SurveyResponse
     import pandas as pd
+    import numpy as np
 
     profiles = StudentProfile.query.all()
 
-    df = pd.DataFrame([{
+    # Original data for scatter plots
+    df_profiles = pd.DataFrame([{
         "profile_id": p.id,
         "diagnosis": p.clinical_diagnosis or "Not Diagnosed",
         "awareness": p.pcos_awareness_score,
@@ -405,6 +407,142 @@ def charts_page():
         "symptoms": p.pcos_symptoms_score
     } for p in profiles])
 
-    rows = df.to_dict(orient="records") if not df.empty else []
+    rows = df_profiles.to_dict(orient="records") if not df_profiles.empty else []
 
-    return render_template("admin_charts.html", rows=rows)
+    # NEW: Prepare data for correlation heatmap
+    correlation_data = []
+    for p in profiles:
+        # Get academic averages
+        academic_records = AcademicRecord.query.filter_by(profile_id=p.id).all()
+        avg_gpa = np.mean([r.gpa for r in academic_records if r.gpa]) if academic_records else None
+        avg_attendance = np.mean([r.attendance_percent for r in academic_records if r.attendance_percent]) if academic_records else None
+        avg_study_hours = np.mean([r.study_hours_per_week for r in academic_records if r.study_hours_per_week]) if academic_records else None
+
+        # Get survey averages
+        surveys = SurveyResponse.query.filter_by(profile_id=p.id).all()
+        avg_fatigue = np.mean([s.fatigue for s in surveys if s.fatigue]) if surveys else None
+        avg_mood = np.mean([s.mood_swings for s in surveys if s.mood_swings]) if surveys else None
+        avg_stress = np.mean([s.perceived_academic_stress for s in surveys if s.perceived_academic_stress]) if surveys else None
+
+        correlation_data.append({
+            "PCOS Awareness": p.pcos_awareness_score,
+            "Academic Pressure": p.academic_pressure_score,
+            "Symptoms": p.pcos_symptoms_score,
+            "GPA": avg_gpa,
+            "Attendance %": avg_attendance,
+            "Study Hours/Week": avg_study_hours,
+            "Fatigue": avg_fatigue,
+            "Mood Swings": avg_mood,
+            "Academic Stress": avg_stress
+        })
+
+    df_correlation = pd.DataFrame(correlation_data)
+    
+    # Compute correlation matrix
+    correlation_matrix = None
+    correlation_labels = []
+    correlation_values = []
+    
+    if not df_correlation.empty:
+        # Drop columns that are all NaN
+        df_correlation = df_correlation.dropna(axis=1, how='all')
+        
+        # Compute correlation only if we have at least 2 variables and 2 samples
+        if len(df_correlation.columns) >= 2 and len(df_correlation) >= 2:
+            correlation_matrix = df_correlation.corr().round(3)
+            correlation_labels = correlation_matrix.columns.tolist()
+            correlation_values = correlation_matrix.values.tolist()
+
+    # NEW: Diagnosis group heatmap data
+    diagnosis_labels = []
+    metric_labels = []
+    diagnosis_values = []
+    
+    if not df_correlation.empty:
+        # Add diagnosis column
+        diagnosis_col = [p.clinical_diagnosis or "Not Specified" for p in profiles]
+        df_with_diagnosis = df_correlation.copy()
+        df_with_diagnosis['Diagnosis'] = diagnosis_col
+        
+        # Group by diagnosis and calculate means
+        grouped = df_with_diagnosis.groupby('Diagnosis').mean()
+        
+        if not grouped.empty:
+            diagnosis_labels = grouped.index.tolist()
+            metric_labels = grouped.columns.tolist()
+            diagnosis_values = grouped.values.tolist()
+
+    return render_template("admin_charts.html", 
+                          rows=rows,
+                          correlation_labels=correlation_labels,
+                          correlation_values=correlation_values,
+                          diagnosis_labels=diagnosis_labels,
+                          metric_labels=metric_labels,
+                          diagnosis_values=diagnosis_values)
+
+
+@admin_bp.route("/reports")
+@login_required
+def reports_page():
+    """Display reports interface."""
+    if not current_user.is_admin:
+        return "Access denied", 403
+    
+    from .reports import ReportGenerator
+    
+    # Generate preview data
+    generator = ReportGenerator()
+    report_data = generator.generate_full_report_data()
+    
+    return render_template("admin_reports.html", report_data=report_data)
+
+
+@admin_bp.route("/reports/generate-pdf")
+@login_required
+def generate_pdf_report():
+    """Generate and download PDF report."""
+    if not current_user.is_admin:
+        return "Access denied", 403
+    
+    from .reports import ReportGenerator, PDFReportBuilder
+    from flask import send_file
+    import os
+    import tempfile
+    from datetime import datetime
+    
+    # Generate report data
+    generator = ReportGenerator()
+    report_data = generator.generate_full_report_data()
+    
+    # Create PDF in temporary directory
+    temp_dir = tempfile.gettempdir()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"PCOS_Research_Report_{timestamp}.pdf"
+    filepath = os.path.join(temp_dir, filename)
+    
+    # Build PDF
+    pdf_builder = PDFReportBuilder(report_data)
+    pdf_builder.build_pdf(filepath)
+    
+    # Send file for download
+    return send_file(
+        filepath,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
+
+
+@admin_bp.route("/reports/preview-data")
+@login_required
+def preview_report_data():
+    """Preview report data as JSON (for debugging)."""
+    if not current_user.is_admin:
+        return "Access denied", 403
+    
+    from .reports import ReportGenerator
+    
+    generator = ReportGenerator()
+    report_data = generator.generate_full_report_data()
+    
+    return jsonify(report_data)
