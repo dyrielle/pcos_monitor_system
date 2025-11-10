@@ -88,4 +88,3 @@ class SurveyResponse(db.Model):
     notes = db.Column(db.Text)
 
     profile = db.relationship("StudentProfile", back_populates="survey_responses")
-
