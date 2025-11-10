@@ -28,6 +28,11 @@ Manage research dataset, analytics, charts, and exports.
     ⬇ Export CSV
   </a>
 
+  <!-- IMPORT CSV -->
+  <button type="button" class="btn pill-btn pill-light px-4 py-3" style="min-width:200px;" data-bs-toggle="modal" data-bs-target="#importModal">
+    ⬆ Import CSV
+  </button>
+
 </div>
 
 <hr class="mt-5">
@@ -35,5 +40,119 @@ Manage research dataset, analytics, charts, and exports.
 <p class="text-center text-muted" style="font-size:.9rem;">
 You are viewing the research administration panel. Restricted to authorized administrators only.
 </p>
+
+<!-- Import CSV Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importModalLabel">Import CSV Data</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Upload a CSV file to import research data. The file will be validated before import.</p>
+        
+        <!-- Download Sample CSV Button -->
+        <div class="mb-3">
+          <a href="{{ url_for('admin.download_sample_csv') }}" class="btn btn-outline-primary btn-sm w-100">
+            📥 Download Sample CSV Format
+          </a>
+          <small class="text-muted d-block mt-1">Use this as a reference for the correct CSV structure.</small>
+        </div>
+
+        <hr>
+
+        <!-- File Upload Form -->
+        <form id="importForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="csvFile" class="form-label">Select CSV File</label>
+            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" required>
+            <small class="text-muted">Only .csv files are accepted.</small>
+          </div>
+
+          <div id="uploadStatus" class="alert" style="display:none;"></div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" id="uploadBtn">
+              <span id="uploadBtnText">Upload and Import</span>
+              <span id="uploadSpinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display:none;"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('importForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const fileInput = document.getElementById('csvFile');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const uploadBtnText = document.getElementById('uploadBtnText');
+  const uploadSpinner = document.getElementById('uploadSpinner');
+  const uploadStatus = document.getElementById('uploadStatus');
+  
+  if (!fileInput.files.length) {
+    uploadStatus.className = 'alert alert-warning';
+    uploadStatus.textContent = 'Please select a file.';
+    uploadStatus.style.display = 'block';
+    return;
+  }
+
+  const file = fileInput.files[0];
+  if (!file.name.endsWith('.csv')) {
+    uploadStatus.className = 'alert alert-warning';
+    uploadStatus.textContent = 'Please select a valid CSV file.';
+    uploadStatus.style.display = 'block';
+    return;
+  }
+
+  // Show loading state
+  uploadBtn.disabled = true;
+  uploadBtnText.textContent = 'Uploading...';
+  uploadSpinner.style.display = 'inline-block';
+  uploadStatus.style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('{{ url_for("admin.import_csv") }}', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      uploadStatus.className = 'alert alert-success';
+      uploadStatus.innerHTML = `<strong>Success!</strong><br>${result.message}<br>` +
+                               `Created: ${result.created} records<br>` +
+                               `Skipped: ${result.skipped} duplicates`;
+      uploadStatus.style.display = 'block';
+      fileInput.value = '';
+      
+      // Reload page after 2 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      uploadStatus.className = 'alert alert-danger';
+      uploadStatus.innerHTML = `<strong>Error!</strong><br>${result.error || 'Upload failed'}`;
+      uploadStatus.style.display = 'block';
+    }
+  } catch (error) {
+    uploadStatus.className = 'alert alert-danger';
+    uploadStatus.innerHTML = `<strong>Error!</strong><br>Network error occurred.`;
+    uploadStatus.style.display = 'block';
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtnText.textContent = 'Upload and Import';
+    uploadSpinner.style.display = 'none';
+  }
+});
+</script>
 
 {% endblock %}
