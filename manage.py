@@ -9,5 +9,5 @@ def make_shell_context():
     return {"db": db, "User": User, "StudentProfile": StudentProfile,
             "AcademicRecord": AcademicRecord, "SurveyResponse": SurveyResponse}
 
-if __name__ == "_main_":
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
