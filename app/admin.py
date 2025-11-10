@@ -338,6 +338,39 @@ def update_profile(profile_id):
     return redirect(url_for("admin.edit_profile", profile_id=profile.id))
 
 
+@admin_bp.route("/profile/<int:profile_id>/delete", methods=["POST"])
+@login_required
+def delete_profile(profile_id):
+    if not current_user.is_admin:
+        return "Access denied", 403
+
+    from .models import StudentProfile, AcademicRecord, SurveyResponse, User
+    from .extensions import db
+    
+    profile = StudentProfile.query.get_or_404(profile_id)
+    
+    # Delete associated academic records
+    AcademicRecord.query.filter_by(profile_id=profile_id).delete()
+    
+    # Delete associated survey responses
+    SurveyResponse.query.filter_by(profile_id=profile_id).delete()
+    
+    # Get the user_id before deleting the profile
+    user_id = profile.user_id
+    
+    # Delete the student profile
+    db.session.delete(profile)
+    
+    # Optionally delete the user account as well
+    user = User.query.get(user_id)
+    if user and not user.is_admin:  # Don't delete admin users
+        db.session.delete(user)
+    
+    db.session.commit()
+    flash("Student profile and associated data deleted successfully.", "success")
+    return redirect(url_for("admin.view_data"))
+
+
 @admin_bp.route("/analytics")
 @login_required
 def analytics_page():
