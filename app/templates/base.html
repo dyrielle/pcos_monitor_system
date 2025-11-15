@@ -139,10 +139,9 @@
               <li class="nav-item"><a class="btn pill-btn pill-yellow" href="{{ url_for('admin.admin_home') }}">Admin</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% else %}
-              <!-- Regular users: show data submission + dashboards + logout -->
+              <!-- Regular users: show data submission + main dashboard + logout (removed personal 'My Dashboard') -->
               <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.submit_data') }}">Submit Data</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-green" href="/dashboard/">Dashboard</a></li>
-              <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.student_dashboard') }}">My Dashboard</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% endif %}
 

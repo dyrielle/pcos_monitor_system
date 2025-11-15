@@ -118,7 +118,12 @@ def submit_data():
 @login_required
 def student_dashboard():
     """Individual student dashboard showing personal health and academic trends."""
-    
+    # Feature disabled for regular users; keep route but redirect to main Dashboard
+    if not current_user.is_admin:
+        from flask import flash
+        flash("Personal dashboard is no longer available. Please use the Dashboard page.", "info")
+        return redirect("/dashboard/")
+
     from datetime import datetime
     import pandas as pd
     import numpy as np

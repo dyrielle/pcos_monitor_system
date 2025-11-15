@@ -10,6 +10,11 @@ def create_app():
     app = Flask(__name__, template_folder="templates")
     app.config.from_object(Config)
 
+    # Ensure template changes are picked up without a full server restart
+    # (useful in development and avoids stale templates in some environments)
+    app.config.setdefault("TEMPLATES_AUTO_RELOAD", True)
+    app.jinja_env.auto_reload = True
+
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
