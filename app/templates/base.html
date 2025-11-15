@@ -134,19 +134,17 @@
         <ul class="navbar-nav align-items-lg-center gap-2">
 
           {% if current_user.is_authenticated %}
-
-            <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.submit_data') }}">Submit Data</a></li>
-            <li class="nav-item"><a class="btn pill-btn pill-green" href="/dashboard/">Dashboard</a></li>
-            
-            {% if not current_user.is_admin %}
-            <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.student_dashboard') }}">My Dashboard</a></li>
-            {% endif %}
-
             {% if current_user.is_admin %}
-            <li class="nav-item"><a class="btn pill-btn pill-yellow" href="{{ url_for('admin.admin_home') }}">Admin</a></li>
+              <!-- Admin users: show only Admin Panel + Logout -->
+              <li class="nav-item"><a class="btn pill-btn pill-yellow" href="{{ url_for('admin.admin_home') }}">Admin</a></li>
+              <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+              <!-- Regular users: show data submission + dashboards + logout -->
+              <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.submit_data') }}">Submit Data</a></li>
+              <li class="nav-item"><a class="btn pill-btn pill-green" href="/dashboard/">Dashboard</a></li>
+              <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.student_dashboard') }}">My Dashboard</a></li>
+              <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% endif %}
-
-            <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
 
           {% else %}
             <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.login') }}">Login</a></li>
