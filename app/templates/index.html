@@ -17,7 +17,11 @@
   {% if not current_user.is_authenticated %}
   <p style="font-size:1.15rem; font-weight:500;">Please login or create an account to begin.</p>
   {% else %}
+    {% if current_user.is_admin %}
+  <p style="font-size:1.15rem; font-weight:500;">Welcome back, Administrator! Use the navigation menu to access analytics, manage data, and generate reports.</p>
+    {% else %}
   <p style="font-size:1.15rem; font-weight:500;">Welcome back! Use the navigation menu to access your dashboard and submit data.</p>
+    {% endif %}
   {% endif %}
 
   <div class="mt-5 p-4" style="background:#f8f9fa; border-radius:12px; max-width:900px; margin:auto; border:1px solid #e5e7eb;">
