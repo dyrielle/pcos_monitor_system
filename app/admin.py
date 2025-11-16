@@ -380,9 +380,12 @@ def analytics_page():
     from .models import StudentProfile, AcademicRecord
     import pandas as pd
     from scipy.stats import spearmanr
+    import numpy as np
 
     profiles = StudentProfile.query.all()
 
+    # Build a dataframe for profiles. When there are no profiles, ensure
+    # expected columns exist to avoid KeyError on access below.
     df = pd.DataFrame([{
         "diagnosis": p.clinical_diagnosis,
         "awareness": p.pcos_awareness_score,
@@ -390,6 +393,10 @@ def analytics_page():
         "symptoms": p.pcos_symptoms_score,
         "profile_id": p.id
     } for p in profiles])
+    if df.empty:
+        df = pd.DataFrame(columns=[
+            "diagnosis", "awareness", "academic_pressure", "symptoms", "profile_id"
+        ])
 
     gpa_data = AcademicRecord.query.all()
     df_gpa = pd.DataFrame([{
@@ -400,17 +407,31 @@ def analytics_page():
     if not df_gpa.empty:
         df_gpa = df_gpa.groupby("profile_id")["gpa"].mean().reset_index()
         df = df.merge(df_gpa, on="profile_id", how="left")
+    else:
+        # Ensure 'gpa' column exists so downstream checks don't raise KeyError
+        df["gpa"] = np.nan
 
     corr_sym_acad = None
     corr_sym_gpa = None
 
-    if df["symptoms"].notnull().sum() > 1 and df["academic_pressure"].notnull().sum() > 1:
+    if (
+        "symptoms" in df.columns and "academic_pressure" in df.columns and
+        df["symptoms"].notnull().sum() > 1 and df["academic_pressure"].notnull().sum() > 1
+    ):
         corr_sym_acad, _ = spearmanr(df["symptoms"], df["academic_pressure"], nan_policy="omit")
 
-    if df["symptoms"].notnull().sum() > 1 and df["gpa"].notnull().sum() > 1:
+    if (
+        "symptoms" in df.columns and "gpa" in df.columns and
+        df["symptoms"].notnull().sum() > 1 and df["gpa"].notnull().sum() > 1
+    ):
         corr_sym_gpa, _ = spearmanr(df["symptoms"], df["gpa"], nan_policy="omit")
 
-    group_means = df.groupby("diagnosis")[["awareness", "academic_pressure", "symptoms"]].mean().reset_index()
+    # Compute group means only if required columns exist
+    if set(["diagnosis", "awareness", "academic_pressure", "symptoms"]).issubset(df.columns):
+        group_means = df.groupby("diagnosis")[ ["awareness", "academic_pressure", "symptoms"] ].mean().reset_index()
+    else:
+        # Empty dataframe with expected columns so template loops are safe
+        group_means = pd.DataFrame(columns=["diagnosis", "awareness", "academic_pressure", "symptoms"])
 
     return render_template("admin_analytics.html",
                            group_means=group_means,
