@@ -254,23 +254,26 @@ def import_csv():
                     symptoms_5=safe_int(row.get('Unsupported Balance'))
                 )
                 
-                # Calculate composite scores
-                awareness_scores = [profile.awareness_1, profile.awareness_2, profile.awareness_3, 
-                                   profile.awareness_4, profile.awareness_5]
+                # Calculate composite scores (MANUSCRIPT FORMULA)
+                # Awareness: items 1, 2, 6, 7, 8
+                awareness_scores = [profile.awareness_1, profile.awareness_2, profile.awareness_6, 
+                                   profile.awareness_7, profile.awareness_8]
                 awareness_valid = [s for s in awareness_scores if s is not None]
-                if awareness_valid:
-                    profile.pcos_awareness_score = sum(awareness_valid) / len(awareness_valid)
+                if len(awareness_valid) == 5:
+                    profile.pcos_awareness_score = sum(awareness_valid) / 5
                 
+                # Academic Pressure: items 1, 2, 3
                 academic_scores = [profile.academic_1, profile.academic_2, profile.academic_3]
                 academic_valid = [s for s in academic_scores if s is not None]
-                if academic_valid:
-                    profile.academic_pressure_score = sum(academic_valid) / len(academic_valid)
+                if len(academic_valid) == 3:
+                    profile.academic_pressure_score = sum(academic_valid) / 3
                 
+                # Symptoms: items 1, 2, 3, fatigue_sleep_item, symptoms_6
                 symptoms_scores = [profile.symptoms_1, profile.symptoms_2, profile.symptoms_3,
-                                  profile.symptoms_4, profile.symptoms_5]
+                                  profile.fatigue_sleep_item, profile.symptoms_6]
                 symptoms_valid = [s for s in symptoms_scores if s is not None]
-                if symptoms_valid:
-                    profile.pcos_symptoms_score = sum(symptoms_valid) / len(symptoms_valid)
+                if len(symptoms_valid) == 5:
+                    profile.pcos_symptoms_score = sum(symptoms_valid) / 5
                 
                 db.session.add(profile)
                 created_count += 1
@@ -413,6 +416,8 @@ def analytics_page():
 
     corr_sym_acad = None
     corr_sym_gpa = None
+    corr_aware_sym = None
+    corr_aware_acad = None
 
     if (
         "symptoms" in df.columns and "academic_pressure" in df.columns and
@@ -425,6 +430,18 @@ def analytics_page():
         df["symptoms"].notnull().sum() > 1 and df["gpa"].notnull().sum() > 1
     ):
         corr_sym_gpa, _ = spearmanr(df["symptoms"], df["gpa"], nan_policy="omit")
+    
+    if (
+        "awareness" in df.columns and "symptoms" in df.columns and
+        df["awareness"].notnull().sum() > 1 and df["symptoms"].notnull().sum() > 1
+    ):
+        corr_aware_sym, _ = spearmanr(df["awareness"], df["symptoms"], nan_policy="omit")
+    
+    if (
+        "awareness" in df.columns and "academic_pressure" in df.columns and
+        df["awareness"].notnull().sum() > 1 and df["academic_pressure"].notnull().sum() > 1
+    ):
+        corr_aware_acad, _ = spearmanr(df["awareness"], df["academic_pressure"], nan_policy="omit")
 
     # Compute group means only if required columns exist
     if set(["diagnosis", "awareness", "academic_pressure", "symptoms"]).issubset(df.columns):
@@ -436,7 +453,9 @@ def analytics_page():
     return render_template("admin_analytics.html",
                            group_means=group_means,
                            corr_sym_acad=corr_sym_acad,
-                           corr_sym_gpa=corr_sym_gpa)
+                           corr_sym_gpa=corr_sym_gpa,
+                           corr_aware_sym=corr_aware_sym,
+                           corr_aware_acad=corr_aware_acad)
 
 
 ### FIXED CHARTS ROUTE BELOW ###

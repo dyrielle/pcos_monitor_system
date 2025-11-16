@@ -10,7 +10,7 @@ main_bp = Blueprint("main", __name__, template_folder="templates")
 def require_baseline():
     if request.endpoint in ["main.index", "main.profile_setup"]:
         return
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not current_user.is_admin:
         profile = current_user.profile
         if profile and profile.awareness_1 is None:
             return redirect(url_for("main.profile_setup"))
@@ -54,10 +54,13 @@ def profile_setup():
         profile.symptoms_4 = int(request.form.get("symptoms_4"))
         profile.symptoms_5 = int(request.form.get("symptoms_5"))
 
-        # composite computed means
-        profile.pcos_awareness_score = (profile.awareness_1 + profile.awareness_2 + profile.awareness_3 + profile.awareness_4 + profile.awareness_5) / 5
+        # composite computed means (MANUSCRIPT FORMULA)
+        # Awareness: items 1, 2, 6, 7, 8 (excludes 3, 4, 5 which are symptom knowledge)
+        profile.pcos_awareness_score = (profile.awareness_1 + profile.awareness_2 + profile.awareness_6 + profile.awareness_7 + profile.awareness_8) / 5
+        # Academic Pressure: items 1, 2, 3 (unchanged)
         profile.academic_pressure_score = (profile.academic_1 + profile.academic_2 + profile.academic_3) / 3
-        profile.pcos_symptoms_score = (profile.symptoms_1 + profile.symptoms_2 + profile.symptoms_3 + profile.symptoms_4 + profile.symptoms_5) / 5
+        # Symptoms: items 1, 2, 3, fatigue_sleep_item, symptoms_6 (excludes 4, 5)
+        profile.pcos_symptoms_score = (profile.symptoms_1 + profile.symptoms_2 + profile.symptoms_3 + profile.fatigue_sleep_item + profile.symptoms_6) / 5
 
         db.session.commit()
         flash("Baseline PCOS profile survey completed successfully.", "success")

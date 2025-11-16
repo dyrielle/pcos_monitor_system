@@ -42,24 +42,31 @@ class StudentProfile(db.Model):
     pcos_symptoms_score = db.Column(db.Float)
     academic_pressure_score = db.Column(db.Float)
 
-    # Awareness (5)
-    awareness_1 = db.Column(db.Integer)
-    awareness_2 = db.Column(db.Integer)
-    awareness_3 = db.Column(db.Integer)
-    awareness_4 = db.Column(db.Integer)
-    awareness_5 = db.Column(db.Integer)
+    # Awareness (8 total: 5 original + 3 new for manuscript accuracy)
+    awareness_1 = db.Column(db.Integer)  # Familiar with PCOS
+    awareness_2 = db.Column(db.Integer)  # Know symptom: Irregular periods
+    awareness_3 = db.Column(db.Integer)  # Know symptom: Acne
+    awareness_4 = db.Column(db.Integer)  # Know symptom: Weight fluctuations
+    awareness_5 = db.Column(db.Integer)  # Know symptom: Excessive hair growth
+    awareness_6 = db.Column(db.Integer)  # PCOS affects physical & mental health
+    awareness_7 = db.Column(db.Integer)  # Aware of treatments/management
+    awareness_8 = db.Column(db.Integer)  # PCOS can affect academic performance
 
     # Academic Pressure (3)
-    academic_1 = db.Column(db.Integer)
-    academic_2 = db.Column(db.Integer)
-    academic_3 = db.Column(db.Integer)
+    academic_1 = db.Column(db.Integer)  # Feel academic pressure from workloads
+    academic_2 = db.Column(db.Integer)  # Academic environment stress affects health
+    academic_3 = db.Column(db.Integer)  # Academic performance influenced by health
 
-    # Symptoms (5)
-    symptoms_1 = db.Column(db.Integer)
-    symptoms_2 = db.Column(db.Integer)
-    symptoms_3 = db.Column(db.Integer)
-    symptoms_4 = db.Column(db.Integer)
-    symptoms_5 = db.Column(db.Integer)
+    # Symptoms (6 total: 5 original + 1 new)
+    symptoms_1 = db.Column(db.Integer)  # Experience symptoms affecting academic work
+    symptoms_2 = db.Column(db.Integer)  # Feel anxious about health affecting studies
+    symptoms_3 = db.Column(db.Integer)  # Miss deadlines/classes due to health
+    symptoms_4 = db.Column(db.Integer)  # Feel unsupported balancing health & academics
+    symptoms_5 = db.Column(db.Integer)  # Fatigue/sleep affects concentration
+    symptoms_6 = db.Column(db.Integer)  # Professors understanding when health affects performance
+    
+    # Shared item (appears in different contexts)
+    fatigue_sleep_item = db.Column(db.Integer)  # Fatigue/irregular sleep patterns
 
 class AcademicRecord(db.Model):
     __tablename__ = "academic_records"

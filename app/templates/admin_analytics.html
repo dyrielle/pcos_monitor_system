@@ -40,6 +40,14 @@
   {{ "%.3f"|format(corr_sym_acad) if corr_sym_acad is not none else "Not enough data yet" }}
 </p>
 <p>
+  <strong>Awareness ↔ Symptoms:</strong>
+  {{ "%.3f"|format(corr_aware_sym) if corr_aware_sym is not none else "Not enough data yet" }}
+</p>
+<p>
+  <strong>Awareness ↔ Academic Pressure:</strong>
+  {{ "%.3f"|format(corr_aware_acad) if corr_aware_acad is not none else "Not enough data yet" }}
+</p>
+<p>
   <strong>Symptoms ↔ GPA (average per student):</strong>
   {{ "%.3f"|format(corr_sym_gpa) if corr_sym_gpa is not none else "Not enough data yet" }}
 </p>

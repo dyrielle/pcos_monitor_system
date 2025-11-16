@@ -140,6 +140,8 @@
                         <tbody>
                             {% set correlation_labels = {
                                 'symptoms_vs_pressure': 'Symptoms ↔ Academic Pressure',
+                                'awareness_vs_symptoms': 'Awareness ↔ Symptoms',
+                                'awareness_vs_pressure': 'Awareness ↔ Academic Pressure',
                                 'symptoms_vs_gpa': 'Symptoms ↔ GPA',
                                 'pressure_vs_gpa': 'Academic Pressure ↔ GPA',
                                 'fatigue_vs_attendance': 'Fatigue ↔ Attendance'
@@ -152,9 +154,11 @@
                                 <td>{{ data.p_value }}</td>
                                 <td>
                                     <span class="badge 
-                                        {% if 'strong' in data.interpretation %}bg-danger
+                                        {% if 'very strong' in data.interpretation %}bg-dark text-white
+                                        {% elif 'strong' in data.interpretation %}bg-danger
                                         {% elif 'moderate' in data.interpretation %}bg-warning
                                         {% elif 'weak' in data.interpretation %}bg-info
+                                        {% elif 'very weak' in data.interpretation %}bg-light text-dark
                                         {% else %}bg-secondary{% endif %}">
                                         {{ data.interpretation }}
                                     </span>

@@ -101,6 +101,26 @@ class ReportGenerator:
                 "interpretation": self._interpret_correlation(corr)
             }
         
+        # Awareness vs Symptoms
+        df_clean = df[["awareness", "symptoms"]].dropna()
+        if len(df_clean) > 2:
+            corr, p_val = spearmanr(df_clean["awareness"], df_clean["symptoms"])
+            correlations["awareness_vs_symptoms"] = {
+                "coefficient": round(corr, 3),
+                "p_value": round(p_val, 4),
+                "interpretation": self._interpret_correlation(corr)
+            }
+        
+        # Awareness vs Academic Pressure
+        df_clean = df[["awareness", "academic_pressure"]].dropna()
+        if len(df_clean) > 2:
+            corr, p_val = spearmanr(df_clean["awareness"], df_clean["academic_pressure"])
+            correlations["awareness_vs_pressure"] = {
+                "coefficient": round(corr, 3),
+                "p_value": round(p_val, 4),
+                "interpretation": self._interpret_correlation(corr)
+            }
+        
         # Symptoms vs GPA
         df_clean = df[["symptoms", "gpa"]].dropna()
         if len(df_clean) > 2:
@@ -248,6 +268,14 @@ class ReportGenerator:
             corr_data = correlations["symptoms_vs_pressure"]
             findings.append(f"PCOS symptoms show {corr_data['interpretation']} correlation with academic pressure (r={corr_data['coefficient']}, p={corr_data['p_value']}).")
         
+        if "awareness_vs_symptoms" in correlations:
+            corr_data = correlations["awareness_vs_symptoms"]
+            findings.append(f"PCOS awareness shows {corr_data['interpretation']} correlation with symptoms (r={corr_data['coefficient']}, p={corr_data['p_value']}).")
+        
+        if "awareness_vs_pressure" in correlations:
+            corr_data = correlations["awareness_vs_pressure"]
+            findings.append(f"PCOS awareness shows {corr_data['interpretation']} correlation with academic pressure (r={corr_data['coefficient']}, p={corr_data['p_value']}).")
+        
         if "symptoms_vs_gpa" in correlations:
             corr_data = correlations["symptoms_vs_gpa"]
             findings.append(f"PCOS symptoms show {corr_data['interpretation']} correlation with GPA (r={corr_data['coefficient']}, p={corr_data['p_value']}).")
@@ -264,6 +292,7 @@ class ReportGenerator:
     def _interpret_correlation(self, r):
         """
         Interpret correlation coefficient strength.
+        Uses manuscript thresholds for consistency.
         
         Args:
             r (float): Correlation coefficient
@@ -273,14 +302,17 @@ class ReportGenerator:
         """
         abs_r = abs(r)
         
-        if abs_r >= 0.7:
+        # Manuscript interpretation thresholds
+        if abs_r >= 0.8:
+            strength = "very strong"
+        elif abs_r >= 0.6:
             strength = "strong"
         elif abs_r >= 0.4:
             strength = "moderate"
         elif abs_r >= 0.2:
             strength = "weak"
         else:
-            strength = "negligible"
+            strength = "very weak"
         
         direction = "positive" if r >= 0 else "negative"
         
@@ -515,6 +547,8 @@ class PDFReportBuilder:
             
             correlation_labels = {
                 'symptoms_vs_pressure': 'Symptoms ↔ Academic Pressure',
+                'awareness_vs_symptoms': 'Awareness ↔ Symptoms',
+                'awareness_vs_pressure': 'Awareness ↔ Academic Pressure',
                 'symptoms_vs_gpa': 'Symptoms ↔ GPA',
                 'pressure_vs_gpa': 'Academic Pressure ↔ GPA',
                 'fatigue_vs_attendance': 'Fatigue ↔ Attendance'
