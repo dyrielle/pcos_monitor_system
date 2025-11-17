@@ -1,302 +1,124 @@
         {% extends "base.html" %}
     {% block content %}
 
-    <h2>Interactive Scatter Plots (Population)</h2>
-    <p class="text-muted">
-    Correlations shown regardless of diagnosis. Hover a point to see <em>profile_id</em> and <em>diagnosis</em>. Lines are OLS trendlines.
-    </p>
-
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-    <hr>
-
-    <div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <strong>Awareness vs Academic Pressure</strong>
-        </div>
-        <div class="card-body">
-            <div id="sc_awareness_pressure" style="width:100%;height:420px;"></div>
-        </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <strong>Awareness vs PCOS-related Symptoms</strong>
-        </div>
-        <div class="card-body">
-            <div id="sc_awareness_symptoms" style="width:100%;height:420px;"></div>
-        </div>
-        </div>
-    </div>
-    </div>
-
-    <div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <strong>PCOS-related Symptoms vs Academic Pressure</strong>
-        </div>
-        <div class="card-body">
-            <div id="sc_symptoms_pressure" style="width:100%;height:420px;"></div>
-        </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- NEW: Correlation Heatmap Section -->
-    <hr class="my-5">
-
-    <h3>Correlation Heatmap</h3>
-    <p class="text-muted">
-        Pearson correlation between all numeric variables. Values range from -1 (negative correlation) to +1 (positive correlation).
-    </p>
+    <!-- Simplified Correlation Heatmap (Manuscript Version) -->
+    <h3>How Strongly Are These Factors Related?</h3>
+    <h5 class="text-muted">Relationship Between PCOS Awareness, Symptoms, and Academic Pressure</h5>
 
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <strong>Variable Correlation Matrix</strong>
+                    <strong>Correlation Strength Between Main Factors</strong>
                 </div>
                 <div class="card-body">
-                    <div id="correlation_heatmap" style="width:100%;height:600px;"></div>
+                    <div id="simple_correlation_heatmap" style="width:100%;height:400px;"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- NEW: Diagnosis Group Heatmap Section -->
-    <hr class="my-5">
-
-    <h3>Symptom Severity by Diagnosis Group</h3>
-    <p class="text-muted">
-        Average values of health and academic metrics grouped by clinical diagnosis status. 
-        Helps identify which symptoms are most prevalent in each diagnosis group.
-    </p>
-
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <strong>Mean Metrics by Diagnosis Group</strong>
-                </div>
-                <div class="card-body">
-                    <div id="diagnosis_heatmap" style="width:100%;height:500px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary">Back to Admin Panel</a>
+    <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary mt-4">Back to Admin Panel</a>
 
     <script>
-    // ----- Data from Flask -----
-    const rows = {{ rows | tojson }};
+    // ----- SIMPLIFIED CORRELATION HEATMAP (Manuscript Version) -----
+    const simpleCorrLabels = {{ simple_corr_labels | tojson }};
+    const simpleCorrValues = {{ simple_corr_values | tojson }};
 
-    // Utility: filter rows with both fields present (not null/undefined)
-    function pairData(rows, xKey, yKey) {
-        const X = [], Y = [], text = [];
-        for (const r of rows) {
-        const xv = r[xKey], yv = r[yKey];
-        if (xv !== null && xv !== undefined && yv !== null && yv !== undefined) {
-            X.push(xv);
-            Y.push(yv);
-            // Hover text: profile_id + diagnosis
-            text.push(`profile_id: ${r.profile_id}<br>diagnosis: ${r.diagnosis}`);
-        }
-        }
-        return { X, Y, text };
-    }
+    if (simpleCorrLabels && simpleCorrLabels.length > 0 && simpleCorrValues && simpleCorrValues.length > 0) {
+        // Create masked values for lower triangle only (easier to read)
+        const maskedValues = simpleCorrValues.map((row, i) => 
+            row.map((val, j) => (j > i ? null : val))
+        );
+        
+        // Create text annotations with larger, clearer values
+        const textAnnotations = simpleCorrValues.map((row, i) => 
+            row.map((val, j) => {
+                if (j > i) return '';  // Hide upper triangle
+                if (i === j) return '1.00';  // Diagonal always 1
+                return val.toFixed(2);  // Show correlation value
+            })
+        );
 
-    // Compute simple OLS trendline (y = m*x + b)
-    function ols(X, Y) {
-        const n = X.length;
-        if (n < 2) return null;
-        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-        for (let i = 0; i < n; i++) {
-        const x = X[i], y = Y[i];
-        sumX += x; sumY += y; sumXY += x*y; sumXX += x*x;
-        }
-        const denom = (n * sumXX - sumX * sumX);
-        if (denom === 0) return null;
-        const m = (n * sumXY - sumX * sumY) / denom;
-        const b = (sumY - m * sumX) / n;
-
-        const xMin = Math.min(...X), xMax = Math.max(...X);
-        const lineX = [xMin, xMax];
-        const lineY = [m * xMin + b, m * xMax + b];
-        return { m, b, lineX, lineY };
-    }
-
-    // Plot helper (white minimal style)
-    function drawScatter(divId, X, Y, text, xLabel, yLabel) {
-        if (X.length < 2) {
-        document.getElementById(divId).innerHTML =
-            '<div class="text-muted">Not enough data yet.</div>';
-        return;
-        }
-
-        const points = {
-        x: X, y: Y, text: text,
-        mode: 'markers',
-        type: 'scatter',
-        hovertemplate: '%{text}<br>' + xLabel + ': %{x:.3f}<br>' + yLabel + ': %{y:.3f}<extra></extra>',
-        marker: { size: 8 }
-        };
-
-        const model = ols(X, Y);
-        const trend = model ? {
-        x: model.lineX,
-        y: model.lineY,
-        mode: 'lines',
-        name: 'OLS Trendline',
-        line: { width: 2 }
-        } : null;
-
-        const data = trend ? [points, trend] : [points];
-
-        const layout = {
-        paper_bgcolor: 'white',
-        plot_bgcolor: 'white',
-        margin: { t: 20, r: 20, b: 50, l: 55 },
-        xaxis: { title: xLabel, zeroline: false },
-        yaxis: { title: yLabel, zeroline: false },
-        showlegend: false
-        };
-
-        Plotly.newPlot(divId, data, layout, {displaylogo:false, responsive:true});
-    }
-
-    // ---- Build each plot ----
-    const ap = pairData(rows, 'awareness', 'academic_pressure');
-    drawScatter('sc_awareness_pressure', ap.X, ap.Y, ap.text, 'PCOS Awareness', 'Academic Pressure');
-
-    const as_ = pairData(rows, 'awareness', 'symptoms');
-    drawScatter('sc_awareness_symptoms', as_.X, as_.Y, as_.text, 'PCOS Awareness', 'PCOS-related Symptoms');
-
-    const sp = pairData(rows, 'symptoms', 'academic_pressure');
-    drawScatter('sc_symptoms_pressure', sp.X, sp.Y, sp.text, 'PCOS-related Symptoms', 'Academic Pressure');
-
-    // ----- CORRELATION HEATMAP -----
-    const correlationLabels = {{ correlation_labels | tojson }};
-    const correlationValues = {{ correlation_values | tojson }};
-
-    if (correlationLabels && correlationLabels.length > 0 && correlationValues && correlationValues.length > 0) {
-        const heatmapData = [{
-            z: correlationValues,
-            x: correlationLabels,
-            y: correlationLabels,
+        // Create a more intuitive color scheme
+        // Stronger correlations = darker colors, weaker = lighter
+        const simpleHeatmapData = [{
+            z: maskedValues,
+            x: simpleCorrLabels,
+            y: simpleCorrLabels,
             type: 'heatmap',
             colorscale: [
-                [0, '#3D5A80'],      // Dark blue (negative correlation)
-                [0.5, '#EE6C4D'],    // White (no correlation)
-                [1, '#98C1D9']       // Light blue (positive correlation)
+                [0, '#fee5d9'],      // Very light orange (weak positive)
+                [0.3, '#fcbba1'],    // Light orange
+                [0.5, '#fc9272'],    // Medium orange
+                [0.7, '#fb6a4a'],    // Strong orange
+                [0.85, '#de2d26'],   // Very strong orange-red
+                [1, '#a50f15']       // Maximum correlation (dark red)
             ],
-            zmin: -1,
+            zmin: 0,   // We only show positive correlations in this dataset
             zmax: 1,
             colorbar: {
-                title: 'Correlation',
-                titleside: 'right'
+                title: {
+                    text: '<b>Correlation<br>Strength</b>',
+                    side: 'right',
+                    font: { size: 12 }
+                },
+                tickvals: [0, 0.25, 0.5, 0.75, 1.0],
+                ticktext: ['Weak<br>0.00', '0.25', 'Moderate<br>0.50', '0.75', 'Strong<br>1.00'],
+                tickfont: { size: 10 },
+                len: 0.7
             },
-            hovertemplate: '%{y} ↔ %{x}<br>Correlation: %{z:.3f}<extra></extra>',
-            showscale: true
+            text: textAnnotations,
+            texttemplate: '<b>%{text}</b>',
+            textfont: {
+                size: 16,
+                family: 'Arial, sans-serif',
+                color: 'black'
+            },
+            hovertemplate: '<b>%{y} ↔ %{x}</b><br>Correlation: %{z:.2f}<br><i>%{z:.0%} relationship strength</i><extra></extra>',
+            showscale: true,
+            hoverongaps: false
         }];
 
-        const heatmapLayout = {
+        const simpleHeatmapLayout = {
             title: '',
             xaxis: {
                 title: '',
-                tickangle: -45,
-                side: 'bottom'
+                tickangle: -35,
+                side: 'bottom',
+                tickfont: { size: 12, family: 'Arial, sans-serif' },
+                showgrid: false
             },
             yaxis: {
                 title: '',
-                autorange: 'reversed'
+                autorange: 'reversed',
+                tickfont: { size: 12, family: 'Arial, sans-serif' },
+                showgrid: false
             },
             margin: {
-                l: 150,
-                r: 50,
-                t: 50,
+                l: 200,
+                r: 150,
+                t: 20,
                 b: 150
             },
             plot_bgcolor: '#ffffff',
             paper_bgcolor: '#ffffff'
         };
 
-        const heatmapConfig = {
+        const simpleHeatmapConfig = {
             responsive: true,
             displayModeBar: true,
-            displaylogo: false
+            displaylogo: false,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'zoom2d', 'autoScale2d']
         };
 
-        Plotly.newPlot('correlation_heatmap', heatmapData, heatmapLayout, heatmapConfig);
+        Plotly.newPlot('simple_correlation_heatmap', simpleHeatmapData, simpleHeatmapLayout, simpleHeatmapConfig);
     } else {
-        document.getElementById('correlation_heatmap').innerHTML = 
-            '<div class="text-center text-muted p-5">Not enough data to generate correlation heatmap. Need at least 2 variables with 2+ data points.</div>';
-    }
-
-    // ----- DIAGNOSIS GROUP HEATMAP -----
-    const diagnosisLabels = {{ diagnosis_labels | tojson }};
-    const metricLabels = {{ metric_labels | tojson }};
-    const diagnosisValues = {{ diagnosis_values | tojson }};
-
-    if (diagnosisLabels && diagnosisLabels.length > 0 && diagnosisValues && diagnosisValues.length > 0) {
-        const diagnosisHeatmapData = [{
-            z: diagnosisValues,
-            x: metricLabels,
-            y: diagnosisLabels,
-            type: 'heatmap',
-            colorscale: [
-                [0, '#FFFFFF'],      // White (low values)
-                [0.25, '#FFE5B4'],   // Peach
-                [0.5, '#FFB347'],    // Orange
-                [0.75, '#FF6347'],   // Tomato
-                [1, '#DC143C']       // Crimson (high values)
-            ],
-            colorbar: {
-                title: 'Mean Value',
-                titleside: 'right'
-            },
-            hovertemplate: '<b>%{y}</b><br>%{x}: %{z:.2f}<extra></extra>',
-            showscale: true
-        }];
-
-        const diagnosisLayout = {
-            title: '',
-            xaxis: {
-                title: 'Metrics',
-                tickangle: -45,
-                side: 'bottom'
-            },
-            yaxis: {
-                title: 'Diagnosis Group',
-                autorange: 'reversed'
-            },
-            margin: {
-                l: 150,
-                r: 100,
-                t: 50,
-                b: 180
-            },
-            plot_bgcolor: '#ffffff',
-            paper_bgcolor: '#ffffff',
-            height: 400
-        };
-
-        const diagnosisConfig = {
-            responsive: true,
-            displayModeBar: true,
-            displaylogo: false
-        };
-
-        Plotly.newPlot('diagnosis_heatmap', diagnosisHeatmapData, diagnosisLayout, diagnosisConfig);
-    } else {
-        document.getElementById('diagnosis_heatmap').innerHTML = 
-            '<div class="text-center text-muted p-5">Not enough data to generate diagnosis group heatmap. Need at least one diagnosis group with data.</div>';
+        document.getElementById('simple_correlation_heatmap').innerHTML = 
+            '<div class="text-center text-muted p-5">Not enough data to generate correlation heatmap. Need at least 2 data points.</div>';
     }
     </script>
 

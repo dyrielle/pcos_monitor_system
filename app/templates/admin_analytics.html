@@ -1,8 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- Plotly for visualizations -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 <h2>PCOS Population Analytics</h2>
 <p class="text-muted">This page shows dataset-level analysis for research (Admin only).</p>
+
+<hr>
+
+<!-- NEW: Mean Scores Bar Chart (Manuscript Visualization) -->
+<h4>Mean Scores of PCOS Awareness, Symptoms, and Academic Pressure</h4>
+<p class="text-muted">Overall population means on 1-5 Likert Scale</p>
+
+{% if overall_means and (overall_means.awareness or overall_means.academic_pressure or overall_means.symptoms) %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div id="mean_scores_bar" style="width:100%;height:450px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<p class="text-muted">Not enough data to display mean scores chart.</p>
+{% endif %}
 
 <hr>
 
@@ -55,5 +78,72 @@
 <hr>
 
 <a href="{{ url_for('admin.admin_home') }}" class="btn btn-secondary">Back to Admin Panel</a>
+
+<script>
+// ----- MEAN SCORES BAR CHART -----
+{% if overall_means and (overall_means.awareness or overall_means.academic_pressure or overall_means.symptoms) %}
+(function() {
+    const awarenessVal = {{ overall_means.awareness|default(0) }};
+    const pressureVal = {{ overall_means.academic_pressure|default(0) }};
+    const symptomsVal = {{ overall_means.symptoms|default(0) }};
+
+    const barData = [{
+        x: ['PCOS Awareness', 'Academic Pressure', 'PCOS Symptoms'],
+        y: [awarenessVal, pressureVal, symptomsVal],
+        type: 'bar',
+        text: [
+            awarenessVal.toFixed(2),
+            pressureVal.toFixed(2),
+            symptomsVal.toFixed(2)
+        ],
+        textposition: 'outside',
+        textfont: {
+            size: 14,
+            weight: 'bold',
+            color: 'black'
+        },
+        marker: {
+            color: ['#3182bd', '#6baed6', '#9ecae1'],  // Blue gradient like manuscript
+            line: {
+                width: 0
+            }
+        },
+        hovertemplate: '<b>%{x}</b><br>Mean Score: %{y:.2f}<extra></extra>'
+    }];
+
+    const barLayout = {
+        title: {
+            text: 'Mean Scores of PCOS Awareness, Symptoms, and Academic Pressure',
+            font: { size: 16, weight: 'bold' }
+        },
+        xaxis: {
+            title: '',
+            tickangle: 15,
+            tickfont: { size: 12 }
+        },
+        yaxis: {
+            title: 'Mean Score (1-5 Likert Scale)',
+            range: [0, 5.5],
+            tickvals: [0, 1, 2, 3, 4, 5],
+            gridcolor: '#e0e0e0',
+            tickfont: { size: 12 }
+        },
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        margin: { t: 60, b: 80, l: 80, r: 40 },
+        hovermode: 'closest'
+    };
+
+    const barConfig = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+        displaylogo: false
+    };
+
+    Plotly.newPlot('mean_scores_bar', barData, barLayout, barConfig);
+})();
+{% endif %}
+</script>
 
 {% endblock %}

@@ -450,8 +450,16 @@ def analytics_page():
         # Empty dataframe with expected columns so template loops are safe
         group_means = pd.DataFrame(columns=["diagnosis", "awareness", "academic_pressure", "symptoms"])
 
+    # Calculate overall population means for bar chart (manuscript Table 2 visualization)
+    overall_means = {
+        'awareness': df["awareness"].mean() if not df.empty and "awareness" in df.columns else None,
+        'academic_pressure': df["academic_pressure"].mean() if not df.empty and "academic_pressure" in df.columns else None,
+        'symptoms': df["symptoms"].mean() if not df.empty and "symptoms" in df.columns else None
+    }
+
     return render_template("admin_analytics.html",
                            group_means=group_means,
+                           overall_means=overall_means,
                            corr_sym_acad=corr_sym_acad,
                            corr_sym_gpa=corr_sym_gpa,
                            corr_aware_sym=corr_aware_sym,
@@ -462,96 +470,43 @@ def analytics_page():
 @admin_bp.route("/charts")
 @login_required
 def charts_page():
+    """Display simplified correlation heatmap for manuscript visualization."""
     if not current_user.is_admin:
         return "Access denied", 403
 
-    from .models import StudentProfile, AcademicRecord, SurveyResponse
+    from .models import StudentProfile
     import pandas as pd
-    import numpy as np
 
     profiles = StudentProfile.query.all()
 
-    # Original data for scatter plots
+    # Create dataframe with just the three main composite scores
     df_profiles = pd.DataFrame([{
-        "profile_id": p.id,
-        "diagnosis": p.clinical_diagnosis or "Not Diagnosed",
         "awareness": p.pcos_awareness_score,
         "academic_pressure": p.academic_pressure_score,
         "symptoms": p.pcos_symptoms_score
     } for p in profiles])
 
-    rows = df_profiles.to_dict(orient="records") if not df_profiles.empty else []
-
-    # NEW: Prepare data for correlation heatmap
-    correlation_data = []
-    for p in profiles:
-        # Get academic averages
-        academic_records = AcademicRecord.query.filter_by(profile_id=p.id).all()
-        avg_gpa = np.mean([r.gpa for r in academic_records if r.gpa]) if academic_records else None
-        avg_attendance = np.mean([r.attendance_percent for r in academic_records if r.attendance_percent]) if academic_records else None
-        avg_study_hours = np.mean([r.study_hours_per_week for r in academic_records if r.study_hours_per_week]) if academic_records else None
-
-        # Get survey averages
-        surveys = SurveyResponse.query.filter_by(profile_id=p.id).all()
-        avg_fatigue = np.mean([s.fatigue for s in surveys if s.fatigue]) if surveys else None
-        avg_mood = np.mean([s.mood_swings for s in surveys if s.mood_swings]) if surveys else None
-        avg_stress = np.mean([s.perceived_academic_stress for s in surveys if s.perceived_academic_stress]) if surveys else None
-
-        correlation_data.append({
-            "PCOS Awareness": p.pcos_awareness_score,
-            "Academic Pressure": p.academic_pressure_score,
-            "Symptoms": p.pcos_symptoms_score,
-            "GPA": avg_gpa,
-            "Attendance %": avg_attendance,
-            "Study Hours/Week": avg_study_hours,
-            "Fatigue": avg_fatigue,
-            "Mood Swings": avg_mood,
-            "Academic Stress": avg_stress
-        })
-
-    df_correlation = pd.DataFrame(correlation_data)
+    # Simplified correlation matrix for manuscript (only main 3 scores)
+    simple_corr_labels = []
+    simple_corr_values = []
     
-    # Compute correlation matrix
-    correlation_matrix = None
-    correlation_labels = []
-    correlation_values = []
-    
-    if not df_correlation.empty:
-        # Drop columns that are all NaN
-        df_correlation = df_correlation.dropna(axis=1, how='all')
+    if not df_profiles.empty and len(df_profiles) >= 2:
+        # Rename columns for display
+        df_simple = df_profiles.copy()
+        df_simple.columns = ['PCOS Awareness', 'Academic Pressure', 'PCOS Symptoms']
         
-        # Compute correlation only if we have at least 2 variables and 2 samples
-        if len(df_correlation.columns) >= 2 and len(df_correlation) >= 2:
-            correlation_matrix = df_correlation.corr().round(3)
-            correlation_labels = correlation_matrix.columns.tolist()
-            correlation_values = correlation_matrix.values.tolist()
-
-    # NEW: Diagnosis group heatmap data
-    diagnosis_labels = []
-    metric_labels = []
-    diagnosis_values = []
-    
-    if not df_correlation.empty:
-        # Add diagnosis column
-        diagnosis_col = [p.clinical_diagnosis or "Not Specified" for p in profiles]
-        df_with_diagnosis = df_correlation.copy()
-        df_with_diagnosis['Diagnosis'] = diagnosis_col
+        # Drop rows with any NaN in these columns
+        df_simple = df_simple.dropna()
         
-        # Group by diagnosis and calculate means
-        grouped = df_with_diagnosis.groupby('Diagnosis').mean()
-        
-        if not grouped.empty:
-            diagnosis_labels = grouped.index.tolist()
-            metric_labels = grouped.columns.tolist()
-            diagnosis_values = grouped.values.tolist()
+        if len(df_simple) >= 2:
+            # Use Spearman's rho for non-normally distributed data
+            simple_corr_matrix = df_simple.corr(method='spearman').round(2)
+            simple_corr_labels = simple_corr_matrix.columns.tolist()
+            simple_corr_values = simple_corr_matrix.values.tolist()
 
     return render_template("admin_charts.html", 
-                          rows=rows,
-                          correlation_labels=correlation_labels,
-                          correlation_values=correlation_values,
-                          diagnosis_labels=diagnosis_labels,
-                          metric_labels=metric_labels,
-                          diagnosis_values=diagnosis_values)
+                          simple_corr_labels=simple_corr_labels,
+                          simple_corr_values=simple_corr_values)
 
 
 @admin_bp.route("/reports")
