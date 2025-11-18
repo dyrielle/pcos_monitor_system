@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}PCOS Prediction Result{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h2"><i class="bi bi-graph-up-arrow"></i> PCOS Prediction Result</h1>
+      <p class="text-muted">AI-Powered Analysis Using Random Forest Algorithm</p>
+    </div>
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-house"></i> Back to Home
+    </a>
+  </div>
+
+  <!-- Alert Banner -->
+  <div class="alert alert-info border-start border-4 border-info">
+    <i class="bi bi-info-circle-fill"></i>
+    <strong>Important Note:</strong> This prediction is based on machine learning analysis of your <strong>comprehensive PCOS symptom data</strong> from the Submit Data form. 
+    It should not replace professional medical diagnosis. Please consult with a healthcare provider for accurate diagnosis and treatment.
+  </div>
+
+  <!-- Prediction Result Card -->
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm border-0">
+        <div class="card-header {% if prediction.has_pcos %}bg-warning{% else %}bg-success{% endif %} text-white">
+          <h3 class="card-title mb-0">
+            <i class="bi bi-clipboard2-pulse"></i> Prediction Summary
+          </h3>
+        </div>
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <h2 class="display-4 mb-3">
+              {% if prediction.has_pcos %}
+                <span class="badge bg-warning text-dark">⚠️ PCOS Detected</span>
+              {% else %}
+                <span class="badge bg-success">✓ No PCOS Detected</span>
+              {% endif %}
+            </h2>
+            
+            <!-- Probability Gauge -->
+            <div class="mb-4">
+              <h4 class="mb-3">Probability: {{ "%.1f"|format(prediction.probability_percentage) }}%</h4>
+              <div class="progress" style="height: 30px;">
+                <div class="progress-bar 
+                  {% if prediction.probability >= 0.7 %}bg-danger
+                  {% elif prediction.probability >= 0.5 %}bg-warning
+                  {% elif prediction.probability >= 0.3 %}bg-info
+                  {% else %}bg-success
+                  {% endif %}" 
+                  role="progressbar" 
+                  style="width: {{ prediction.probability_percentage }}%"
+                  aria-valuenow="{{ prediction.probability_percentage }}" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ "%.1f"|format(prediction.probability_percentage) }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Risk Level -->
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="text-muted mb-2">Risk Level</h6>
+                    <h4 class="mb-0">
+                      <span class="badge 
+                        {% if 'High' in prediction.risk_level %}bg-danger
+                        {% elif 'Moderate' in prediction.risk_level %}bg-warning text-dark
+                        {% else %}bg-success
+                        {% endif %}">
+                        {{ prediction.risk_level }}
+                      </span>
+                    </h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="text-muted mb-2">Confidence Level</h6>
+                    <h4 class="mb-0">
+                      <span class="badge 
+                        {% if prediction.confidence == 'High' %}bg-primary
+                        {% elif prediction.confidence == 'Moderate' %}bg-info
+                        {% else %}bg-secondary
+                        {% endif %}">
+                        {{ prediction.confidence }}
+                      </span>
+                    </h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Information -->
+          <hr class="my-4">
+          <h5 class="mb-3"><i class="bi bi-person-badge"></i> Your Profile</h5>
+          <div class="row">
+            <div class="col-md-4">
+              <p class="mb-2"><strong>Name:</strong> {{ personal_data.name }}</p>
+            </div>
+            <div class="col-md-4">
+              <p class="mb-2"><strong>Age:</strong> {{ personal_data.age or 'Not specified' }}</p>
+            </div>
+            <div class="col-md-4">
+              <p class="mb-2"><strong>Clinical Diagnosis:</strong> {{ personal_data.clinical_diagnosis }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">
+            <i class="bi bi-lightbulb"></i> Recommendations
+          </h4>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            {% for recommendation in recommendations %}
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill text-success me-2"></i>
+              {{ recommendation }}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Breakdown -->
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-secondary text-white">
+          <h4 class="card-title mb-0">
+            <i class="bi bi-graph-up"></i> Your Assessment Scores
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="card bg-light h-100">
+                <div class="card-body text-center">
+                  <h6 class="text-muted mb-2">PCOS Awareness</h6>
+                  <h3 class="mb-0 text-primary">
+                    {% if profile.pcos_awareness_score %}
+                      {{ "%.2f"|format(profile.pcos_awareness_score) }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </h3>
+                  <small class="text-muted">out of 5</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light h-100">
+                <div class="card-body text-center">
+                  <h6 class="text-muted mb-2">Academic Pressure</h6>
+                  <h3 class="mb-0 text-warning">
+                    {% if profile.academic_pressure_score %}
+                      {{ "%.2f"|format(profile.academic_pressure_score) }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </h3>
+                  <small class="text-muted">out of 5</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light h-100">
+                <div class="card-body text-center">
+                  <h6 class="text-muted mb-2">PCOS Symptoms</h6>
+                  <h3 class="mb-0 text-danger">
+                    {% if profile.pcos_symptoms_score %}
+                      {{ "%.2f"|format(profile.pcos_symptoms_score) }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </h3>
+                  <small class="text-muted">out of 5</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="d-flex gap-3 justify-content-center">
+        <a href="{{ url_for('main.submit_data') }}" class="btn btn-primary btn-lg">
+          <i class="bi bi-journal-plus"></i> Submit New Survey Data
+        </a>
+        <a href="{{ url_for('main.profile_setup') }}" class="btn btn-outline-secondary btn-lg">
+          <i class="bi bi-pencil-square"></i> Update Profile
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-primary btn-lg">
+          <i class="bi bi-printer"></i> Print Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="row mt-5">
+    <div class="col-lg-8 mx-auto">
+      <div class="alert alert-warning border-0">
+        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Medical Disclaimer</h6>
+        <p class="mb-0 small">
+          This prediction system uses machine learning (Random Forest algorithm) trained on comprehensive clinical symptom data from student submissions. 
+          The model analyzes your detailed PCOS symptoms across 6 categories: reproductive/menstrual health, hormonal/skin manifestations, metabolic indicators, 
+          emotional/psychological symptoms, skin-related conditions, and general health symptoms (23 total symptom indicators).
+          The results are for informational and educational purposes only and should not be considered as medical advice. 
+          PCOS diagnosis requires proper clinical evaluation including physical examination, ultrasound, and hormonal tests. 
+          Always consult with qualified healthcare professionals for medical diagnosis and treatment.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .btn, .navbar, .alert-info {
+      display: none !important;
+    }
+    .card {
+      break-inside: avoid;
+    }
+  }
+</style>
+
+{% endblock %}

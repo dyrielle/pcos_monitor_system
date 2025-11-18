@@ -35,32 +35,52 @@ def profile_setup():
     if request.method == "POST":
         profile.clinical_diagnosis = request.form.get("clinical_diagnosis")
 
-        # Awareness
+        # Awareness (only 5 items collected in form)
         profile.awareness_1 = int(request.form.get("awareness_1"))
         profile.awareness_2 = int(request.form.get("awareness_2"))
         profile.awareness_3 = int(request.form.get("awareness_3"))
         profile.awareness_4 = int(request.form.get("awareness_4"))
         profile.awareness_5 = int(request.form.get("awareness_5"))
+        # Items 6, 7, 8 are not collected in this form - set to None or skip
 
-        # Academic Pressure
+        # Academic Pressure (3 items)
         profile.academic_1 = int(request.form.get("academic_1"))
         profile.academic_2 = int(request.form.get("academic_2"))
         profile.academic_3 = int(request.form.get("academic_3"))
 
-        # Symptoms
+        # Symptoms (only 5 items collected in form)
         profile.symptoms_1 = int(request.form.get("symptoms_1"))
         profile.symptoms_2 = int(request.form.get("symptoms_2"))
         profile.symptoms_3 = int(request.form.get("symptoms_3"))
         profile.symptoms_4 = int(request.form.get("symptoms_4"))
         profile.symptoms_5 = int(request.form.get("symptoms_5"))
+        # Item 6 and fatigue_sleep_item are not collected in this form
 
-        # composite computed means (MANUSCRIPT FORMULA)
-        # Awareness: items 1, 2, 6, 7, 8 (excludes 3, 4, 5 which are symptom knowledge)
-        profile.pcos_awareness_score = (profile.awareness_1 + profile.awareness_2 + profile.awareness_6 + profile.awareness_7 + profile.awareness_8) / 5
-        # Academic Pressure: items 1, 2, 3 (unchanged)
-        profile.academic_pressure_score = (profile.academic_1 + profile.academic_2 + profile.academic_3) / 3
-        # Symptoms: items 1, 2, 3, fatigue_sleep_item, symptoms_6 (excludes 4, 5)
-        profile.pcos_symptoms_score = (profile.symptoms_1 + profile.symptoms_2 + profile.symptoms_3 + profile.fatigue_sleep_item + profile.symptoms_6) / 5
+        # Composite computed means (SIMPLIFIED FORMULA based on available data)
+        # Awareness: use only items 1-5 that we have
+        profile.pcos_awareness_score = (
+            profile.awareness_1 + 
+            profile.awareness_2 + 
+            profile.awareness_3 + 
+            profile.awareness_4 + 
+            profile.awareness_5
+        ) / 5
+        
+        # Academic Pressure: items 1, 2, 3
+        profile.academic_pressure_score = (
+            profile.academic_1 + 
+            profile.academic_2 + 
+            profile.academic_3
+        ) / 3
+        
+        # Symptoms: use only items 1-5 that we have
+        profile.pcos_symptoms_score = (
+            profile.symptoms_1 + 
+            profile.symptoms_2 + 
+            profile.symptoms_3 + 
+            profile.symptoms_4 + 
+            profile.symptoms_5
+        ) / 5
 
         db.session.commit()
         flash("Baseline PCOS profile survey completed successfully.", "success")
@@ -104,10 +124,77 @@ def submit_data():
         stress = request.form.get("stress", type=int)
         notes = request.form.get("notes")
 
-        sr = SurveyResponse(profile_id=profile.id,
-                            fatigue=fatigue or 0, irregular_menstruation=irregular,
-                            mood_swings=mood or 0, acne=acne, sleep_quality=sleepq or 0,
-                            perceived_academic_stress=stress or 0, notes=notes)
+        # NEW: Comprehensive PCOS Symptoms
+        # 1. Reproductive / Menstrual
+        irregular_cycles = request.form.get("irregular_cycles", type=int)
+        oligomenorrhea = request.form.get("oligomenorrhea") == "on"
+        amenorrhea = request.form.get("amenorrhea") == "on"
+        heavy_menstruation = request.form.get("heavy_menstruation") == "on"
+        pelvic_pain = request.form.get("pelvic_pain", type=int)
+        
+        # 2. Hormonal / Hyperandrogenism
+        acne_severity = request.form.get("acne_severity", type=int)
+        hirsutism = request.form.get("hirsutism", type=int)
+        alopecia = request.form.get("alopecia") == "on"
+        oily_skin = request.form.get("oily_skin", type=int)
+        
+        # 3. Metabolic
+        weight_gain = request.form.get("weight_gain", type=int)
+        insulin_resistance = request.form.get("insulin_resistance") == "on"
+        elevated_blood_sugar = request.form.get("elevated_blood_sugar") == "on"
+        acanthosis_nigricans = request.form.get("acanthosis_nigricans") == "on"
+        
+        # 4. Emotional / Psychological
+        mood_swings_severity = request.form.get("mood_swings_severity", type=int)
+        anxiety = request.form.get("anxiety", type=int)
+        depression = request.form.get("depression", type=int)
+        sleep_disturbances = request.form.get("sleep_disturbances", type=int)
+        
+        # 5. Skin-Related
+        skin_tags = request.form.get("skin_tags") == "on"
+        dark_patches = request.form.get("dark_patches") == "on"
+        persistent_acne = request.form.get("persistent_acne") == "on"
+        
+        # 6. Other General
+        fatigue_severity = request.form.get("fatigue_severity", type=int)
+        low_energy = request.form.get("low_energy", type=int)
+        sugar_cravings = request.form.get("sugar_cravings", type=int)
+
+        sr = SurveyResponse(
+            profile_id=profile.id,
+            # Legacy fields
+            fatigue=fatigue or 0, 
+            irregular_menstruation=irregular,
+            mood_swings=mood or 0, 
+            acne=acne, 
+            sleep_quality=sleepq or 0,
+            perceived_academic_stress=stress or 0, 
+            notes=notes,
+            # New comprehensive symptoms
+            irregular_cycles=irregular_cycles,
+            oligomenorrhea=oligomenorrhea,
+            amenorrhea=amenorrhea,
+            heavy_menstruation=heavy_menstruation,
+            pelvic_pain=pelvic_pain,
+            acne_severity=acne_severity,
+            hirsutism=hirsutism,
+            alopecia=alopecia,
+            oily_skin=oily_skin,
+            weight_gain=weight_gain,
+            insulin_resistance_symptoms=insulin_resistance,
+            elevated_blood_sugar=elevated_blood_sugar,
+            acanthosis_nigricans=acanthosis_nigricans,
+            mood_swings_severity=mood_swings_severity,
+            anxiety=anxiety,
+            depression=depression,
+            sleep_disturbances=sleep_disturbances,
+            skin_tags=skin_tags,
+            dark_patches=dark_patches,
+            persistent_acne=persistent_acne,
+            fatigue_severity=fatigue_severity,
+            low_energy=low_energy,
+            sugar_cravings=sugar_cravings
+        )
         db.session.add(sr)
 
         db.session.commit()
@@ -248,3 +335,68 @@ def profile_data(profile_id):
     surveys = [{"date": s.date.isoformat(), "fatigue": s.fatigue, "mood": s.mood_swings, "stress": s.perceived_academic_stress}
                for s in profile.survey_responses]
     return jsonify({"academics": academics, "surveys": surveys})
+
+
+@main_bp.route("/predict-pcos")
+@login_required
+def predict_pcos():
+    """PCOS prediction page using Random Forest ML model based on comprehensive symptoms"""
+    from .ml_service import model_exists, predict_pcos, get_recommendations
+    from .models import SurveyResponse
+    
+    # Check if user is admin
+    if current_user.is_admin:
+        flash("PCOS prediction is only available for students.", "warning")
+        return redirect(url_for("main.index"))
+    
+    # Get current student's profile
+    profile = current_user.profile
+    
+    if not profile:
+        flash("Please complete your profile setup first.", "warning")
+        return redirect(url_for("main.profile_setup"))
+    
+    # Check if student has submitted symptom data (REQUIRED for prediction)
+    latest_survey = SurveyResponse.query.filter_by(profile_id=profile.id)\
+        .order_by(SurveyResponse.date.desc())\
+        .first()
+    
+    if not latest_survey:
+        flash("Please complete the 'Submit Data' form first. The prediction requires your comprehensive PCOS symptom information.", "warning")
+        return redirect(url_for("main.submit_data"))
+    
+    # Check if model exists
+    if not model_exists():
+        flash("Prediction model is not available yet. The system is collecting training data from student responses.", "warning")
+        return redirect(url_for("main.index"))
+    
+    try:
+        # Make prediction based on comprehensive symptoms
+        prediction_result = predict_pcos(profile)
+        
+        # Get recommendations
+        recommendations = get_recommendations(prediction_result, profile)
+        
+        # Prepare context data
+        context = {
+            "profile": profile,
+            "prediction": prediction_result,
+            "recommendations": recommendations,
+            "personal_data": {
+                "name": profile.name or "Student",
+                "age": profile.age,
+                "clinical_diagnosis": profile.clinical_diagnosis or "Not specified"
+            }
+        }
+        
+        return render_template("prediction_result.html", **context)
+        
+    except ValueError as e:
+        # Specific error for missing survey data
+        flash(f"{str(e)}", "warning")
+        return redirect(url_for("main.submit_data"))
+    except Exception as e:
+        flash(f"Error making prediction: {str(e)}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("main.index"))
