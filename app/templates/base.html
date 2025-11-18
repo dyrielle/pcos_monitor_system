@@ -78,6 +78,9 @@
     .pill-red{ background: #dc3545; color:#fff; }
     .pill-red:hover{ background:#bb2d3b; color:#fff; }
 
+    .pill-teal{ background: #17a2b8; color:#fff; }
+    .pill-teal:hover{ background:#138496; color:#fff; }
+
     .pill-purple{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; }
     .pill-purple:hover{ background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); transform: translateY(-2px); }
 
@@ -139,9 +142,10 @@
               <li class="nav-item"><a class="btn pill-btn pill-yellow" href="{{ url_for('admin.admin_home') }}">Admin</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% else %}
-              <!-- Regular users: show data submission + main dashboard + logout (removed personal 'My Dashboard') -->
+              <!-- Regular users: show data submission + main dashboard + PCOS Prediction + logout -->
               <li class="nav-item"><a class="btn pill-btn pill-blue" href="{{ url_for('main.submit_data') }}">Submit Data</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-green" href="/dashboard/">Dashboard</a></li>
+              <li class="nav-item"><a class="btn pill-btn pill-purple" href="{{ url_for('main.predict_pcos') }}"><i class="bi bi-heart-pulse"></i> Predict PCOS</a></li>
               <li class="nav-item"><a class="btn pill-btn pill-outline" href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% endif %}
 

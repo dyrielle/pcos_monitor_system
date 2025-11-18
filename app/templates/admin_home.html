@@ -33,9 +33,14 @@ Manage research dataset, analytics, charts, and exports.
     ⬇ Export CSV
   </a>
 
-  <!-- IMPORT CSV -->
+  <!-- IMPORT BASELINE CSV -->
   <button type="button" class="btn pill-btn pill-light px-4 py-3" style="min-width:200px;" data-bs-toggle="modal" data-bs-target="#importModal">
-    ⬆ Import CSV
+    ⬆ Import CSV (Baseline)
+  </button>
+
+  <!-- IMPORT SYMPTOM CSV -->
+  <button type="button" class="btn pill-btn pill-teal px-4 py-3" style="min-width:200px;" data-bs-toggle="modal" data-bs-target="#importSymptomModal">
+    ⬆ Import CSV (Symptoms)
   </button>
 
 </div>
@@ -46,16 +51,16 @@ Manage research dataset, analytics, charts, and exports.
 You are viewing the research administration panel. Restricted to authorized administrators only.
 </p>
 
-<!-- Import CSV Modal -->
+<!-- Import CSV Modal (Baseline Data) -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="importModalLabel">Import CSV Data</h5>
+        <h5 class="modal-title" id="importModalLabel">Import CSV Data (Baseline)</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted mb-3">Upload a CSV file to import research data. The file will be validated before import.</p>
+        <p class="text-muted mb-3">Upload a CSV file to import baseline research data (profiles, awareness, academic pressure). The file will be validated before import.</p>
         
         <!-- Download Sample CSV Button -->
         <div class="mb-3">
@@ -155,6 +160,138 @@ document.getElementById('importForm').addEventListener('submit', async function(
   } finally {
     uploadBtn.disabled = false;
     uploadBtnText.textContent = 'Upload and Import';
+    uploadSpinner.style.display = 'none';
+  }
+});
+</script>
+
+<!-- Import Symptom CSV Modal -->
+<div class="modal fade" id="importSymptomModal" tabindex="-1" aria-labelledby="importSymptomModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="importSymptomModalLabel">Import CSV Data (Symptom Data)</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Upload a CSV file to import detailed PCOS symptom data.</p>
+        
+        <div class="alert alert-info">
+          <strong>Two Import Modes:</strong>
+          <ul class="mb-0 mt-2">
+            <li><strong>With Email column:</strong> Links symptom data to existing students</li>
+            <li><strong>Without Email column:</strong> Auto-creates anonymous profiles for each row</li>
+          </ul>
+        </div>
+        
+        <!-- Download Sample CSV Button -->
+        <div class="mb-3">
+          <a href="{{ url_for('admin.download_symptom_sample_csv') }}" class="btn btn-outline-info btn-sm w-100">
+            📥 Download Sample Symptom CSV Format
+          </a>
+          <small class="text-muted d-block mt-1">Use this as a reference for the correct symptom CSV structure.</small>
+        </div>
+
+        <hr>
+
+        <!-- File Upload Form -->
+        <form id="importSymptomForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="csvSymptomFile" class="form-label">Select Symptom CSV File</label>
+            <input type="file" class="form-control" id="csvSymptomFile" name="file" accept=".csv" required>
+            <small class="text-muted">Only .csv files are accepted.</small>
+          </div>
+
+          <div id="uploadSymptomStatus" class="alert" style="display:none;"></div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-info text-white" id="uploadSymptomBtn">
+              <span id="uploadSymptomBtnText">Upload and Import Symptoms</span>
+              <span id="uploadSymptomSpinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display:none;"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('importSymptomForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const fileInput = document.getElementById('csvSymptomFile');
+  const uploadBtn = document.getElementById('uploadSymptomBtn');
+  const uploadBtnText = document.getElementById('uploadSymptomBtnText');
+  const uploadSpinner = document.getElementById('uploadSymptomSpinner');
+  const uploadStatus = document.getElementById('uploadSymptomStatus');
+  
+  if (!fileInput.files.length) {
+    uploadStatus.className = 'alert alert-warning';
+    uploadStatus.textContent = 'Please select a file.';
+    uploadStatus.style.display = 'block';
+    return;
+  }
+
+  const file = fileInput.files[0];
+  if (!file.name.endsWith('.csv')) {
+    uploadStatus.className = 'alert alert-warning';
+    uploadStatus.textContent = 'Please select a valid CSV file.';
+    uploadStatus.style.display = 'block';
+    return;
+  }
+
+  // Show loading state
+  uploadBtn.disabled = true;
+  uploadBtnText.textContent = 'Uploading...';
+  uploadSpinner.style.display = 'inline-block';
+  uploadStatus.style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('{{ url_for("admin.import_symptom_csv") }}', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      uploadStatus.className = 'alert alert-success';
+      let successMsg = `<strong>Success!</strong><br>${result.message}<br>` +
+                       `Created: ${result.created} symptom records<br>` +
+                       `Skipped: ${result.skipped} rows`;
+      
+      if (result.profiles_created) {
+        successMsg += `<br><strong>Auto-created profiles: ${result.profiles_created}</strong>`;
+      }
+      
+      uploadStatus.innerHTML = successMsg;
+      
+      if (result.errors && result.errors.length > 0) {
+        uploadStatus.innerHTML += `<br><br><strong>Errors:</strong><br>${result.errors.join('<br>')}`;
+      }
+      uploadStatus.style.display = 'block';
+      fileInput.value = '';
+      
+      // Reload page after 3 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } else {
+      uploadStatus.className = 'alert alert-danger';
+      uploadStatus.innerHTML = `<strong>Error!</strong><br>${result.error || 'Upload failed'}`;
+      uploadStatus.style.display = 'block';
+    }
+  } catch (error) {
+    uploadStatus.className = 'alert alert-danger';
+    uploadStatus.innerHTML = `<strong>Error!</strong><br>Network error occurred: ${error.message}`;
+    uploadStatus.style.display = 'block';
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtnText.textContent = 'Upload and Import Symptoms';
     uploadSpinner.style.display = 'none';
   }
 });

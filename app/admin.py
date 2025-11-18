@@ -302,6 +302,280 @@ def import_csv():
         return jsonify({"error": f"Failed to process CSV: {str(e)}"}), 500
 
 
+@admin_bp.route("/download_symptom_sample_csv")
+@login_required
+def download_symptom_sample_csv():
+    """Download sample CSV template for symptom data import"""
+    if not current_user.is_admin:
+        return "Access denied", 403
+    
+    from flask import Response
+    import pandas as pd
+    
+    # Sample data structure for symptom import
+    sample_data = {
+        "Email": ["student1@example.com"],
+        "Date": ["2025-11-18"],
+        
+        # 1. REPRODUCTIVE / MENSTRUAL SYMPTOMS
+        "Irregular Cycles": [3],  # 1-5 scale
+        "Oligomenorrhea": ["No"],  # Yes/No
+        "Amenorrhea": ["No"],
+        "Heavy Menstruation": ["Yes"],
+        "Pelvic Pain": [2],  # 1-5 scale
+        
+        # 2. HORMONAL / HYPERANDROGENISM SYMPTOMS
+        "Acne Severity": [3],  # 1-5 scale
+        "Hirsutism": [2],
+        "Alopecia": ["No"],
+        "Oily Skin": [3],
+        
+        # 3. METABOLIC SYMPTOMS
+        "Weight Gain": [3],  # 1-5 scale
+        "Insulin Resistance": ["No"],
+        "Elevated Blood Sugar": ["No"],
+        "Acanthosis Nigricans": ["No"],
+        
+        # 4. EMOTIONAL / PSYCHOLOGICAL SYMPTOMS
+        "Mood Swings Severity": [3],  # 1-5 scale
+        "Anxiety": [4],
+        "Depression": [2],
+        "Sleep Disturbances": [3],
+        
+        # 5. SKIN-RELATED SYMPTOMS
+        "Skin Tags": ["No"],
+        "Dark Patches": ["No"],
+        "Persistent Acne": ["Yes"],
+        
+        # 6. OTHER GENERAL SYMPTOMS
+        "Fatigue Severity": [4],  # 1-5 scale
+        "Low Energy": [4],
+        "Sugar Cravings": [3],
+        
+        # LEGACY FIELDS (optional, for backward compatibility)
+        "Fatigue": [3],
+        "Irregular Menstruation": ["Yes"],
+        "Mood Swings": [3],
+        "Acne": ["Yes"],
+        "Sleep Quality": [2],
+        "Perceived Academic Stress": [4],
+        "Notes": ["Sample symptom notes"]
+    }
+    
+    df_sample = pd.DataFrame(sample_data)
+    csv_sample = df_sample.to_csv(index=False)
+    
+    return Response(
+        csv_sample,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=pcos_symptom_sample_format.csv"}
+    )
+
+
+@admin_bp.route("/import_symptom_csv", methods=["POST"])
+@login_required
+def import_symptom_csv():
+    """Import detailed symptom data (SurveyResponse records)
+    
+    Supports two modes:
+    1. With Email column - Links to existing students
+    2. Without Email column - Creates anonymous profiles automatically
+    """
+    if not current_user.is_admin:
+        return jsonify({"error": "Access denied"}), 403
+
+    from .models import User, StudentProfile, SurveyResponse
+    from flask import Response
+    from datetime import datetime
+    
+    file = request.files.get('file')
+    
+    if not file:
+        return jsonify({"error": "No file selected"}), 400
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({"error": "File must be a CSV"}), 400
+    
+    try:
+        # Read CSV file
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_data = stream.read()
+        df = pd.read_csv(io.StringIO(csv_data))
+        
+        # Check if Email column exists (determines import mode)
+        has_email_column = 'Email' in df.columns
+        auto_create_profiles = not has_email_column
+        
+        created_count = 0
+        skipped_count = 0
+        profiles_created = 0
+        errors = []
+        
+        # Helper functions
+        def safe_int(value):
+            if pd.isna(value) or value == '' or value == 'No response':
+                return None
+            try:
+                return int(float(value))
+            except:
+                return None
+        
+        def to_bool(value):
+            if pd.isna(value) or value == '':
+                return None
+            val_str = str(value).strip().lower()
+            if val_str in ['yes', 'y', '1', 'true']:
+                return True
+            elif val_str in ['no', 'n', '0', 'false']:
+                return False
+            return None
+        
+        def parse_date(value):
+            if pd.isna(value) or value == '':
+                return datetime.utcnow()
+            try:
+                return pd.to_datetime(value)
+            except:
+                return datetime.utcnow()
+        
+        # Process each row
+        for index, row in df.iterrows():
+            try:
+                profile = None
+                
+                # Mode 1: Email column exists - find existing student
+                if has_email_column:
+                    email = str(row.get('Email', '')).strip()
+                    if not email or email == '':
+                        errors.append(f"Row {index + 1}: Missing email")
+                        skipped_count += 1
+                        continue
+                    
+                    # Find user by email
+                    user = User.query.filter_by(email=email).first()
+                    if not user:
+                        errors.append(f"Row {index + 1}: User with email {email} not found")
+                        skipped_count += 1
+                        continue
+                    
+                    # Get profile
+                    profile = user.profile
+                    if not profile:
+                        errors.append(f"Row {index + 1}: User {email} has no profile")
+                        skipped_count += 1
+                        continue
+                
+                # Mode 2: No Email column - auto-create anonymous profile
+                else:
+                    # Generate unique email for this symptom entry
+                    timestamp = pd.Timestamp.now().timestamp()
+                    email = f"symptom_import_{index}_{timestamp}@pcos.research"
+                    
+                    # Create user
+                    user = User(email=email, is_admin=False)
+                    user.set_password("imported123")  # Default password
+                    db.session.add(user)
+                    db.session.flush()  # Get user ID
+                    
+                    # Create profile with minimal info
+                    profile = StudentProfile(
+                        user_id=user.id,
+                        name=f"Symptom Import {index + 1}",
+                        age=None,  # Unknown
+                        degree_program="Unknown",
+                        consent=True
+                    )
+                    db.session.add(profile)
+                    db.session.flush()  # Get profile ID
+                    profiles_created += 1
+                
+                # Create survey response with comprehensive symptoms
+                # Support both Title Case and snake_case column names
+                survey = SurveyResponse(
+                    profile_id=profile.id,
+                    date=parse_date(row.get('Date')) if has_email_column else datetime.utcnow(),
+                    
+                    # Legacy fields (optional)
+                    fatigue=safe_int(row.get('Fatigue')) or safe_int(row.get('fatigue')),
+                    irregular_menstruation=to_bool(row.get('Irregular Menstruation')) or to_bool(row.get('irregular_menstruation')),
+                    mood_swings=safe_int(row.get('Mood Swings')) or safe_int(row.get('mood_swings')),
+                    acne=to_bool(row.get('Acne')) or to_bool(row.get('acne')),
+                    sleep_quality=safe_int(row.get('Sleep Quality')) or safe_int(row.get('sleep_quality')),
+                    perceived_academic_stress=safe_int(row.get('Perceived Academic Stress')) or safe_int(row.get('perceived_academic_stress')),
+                    notes=str(row.get('Notes', '')).strip() if not pd.isna(row.get('Notes')) else None,
+                    
+                    # 1. REPRODUCTIVE / MENSTRUAL SYMPTOMS
+                    irregular_cycles=safe_int(row.get('Irregular Cycles')) or safe_int(row.get('irregular_cycles')),
+                    oligomenorrhea=to_bool(row.get('Oligomenorrhea')) or to_bool(row.get('oligomenorrhea')),
+                    amenorrhea=to_bool(row.get('Amenorrhea')) or to_bool(row.get('amenorrhea')),
+                    heavy_menstruation=to_bool(row.get('Heavy Menstruation')) or to_bool(row.get('heavy_menstruation')),
+                    pelvic_pain=safe_int(row.get('Pelvic Pain')) or safe_int(row.get('pelvic_pain')),
+                    
+                    # 2. HORMONAL / HYPERANDROGENISM SYMPTOMS
+                    acne_severity=safe_int(row.get('Acne Severity')) or safe_int(row.get('acne_severity')),
+                    hirsutism=safe_int(row.get('Hirsutism')) or safe_int(row.get('hirsutism')),
+                    alopecia=to_bool(row.get('Alopecia')) or to_bool(row.get('alopecia')),
+                    oily_skin=safe_int(row.get('Oily Skin')) or safe_int(row.get('oily_skin')),
+                    
+                    # 3. METABOLIC SYMPTOMS
+                    weight_gain=safe_int(row.get('Weight Gain')) or safe_int(row.get('weight_gain')),
+                    insulin_resistance_symptoms=to_bool(row.get('Insulin Resistance')) or to_bool(row.get('insulin_resistance_symptoms')) or to_bool(row.get('insulin_resistance')),
+                    elevated_blood_sugar=to_bool(row.get('Elevated Blood Sugar')) or to_bool(row.get('elevated_blood_sugar')),
+                    acanthosis_nigricans=to_bool(row.get('Acanthosis Nigricans')) or to_bool(row.get('acanthosis_nigricans')),
+                    
+                    # 4. EMOTIONAL / PSYCHOLOGICAL SYMPTOMS
+                    mood_swings_severity=safe_int(row.get('Mood Swings Severity')) or safe_int(row.get('mood_swings_severity')),
+                    anxiety=safe_int(row.get('Anxiety')) or safe_int(row.get('anxiety')),
+                    depression=safe_int(row.get('Depression')) or safe_int(row.get('depression')),
+                    sleep_disturbances=safe_int(row.get('Sleep Disturbances')) or safe_int(row.get('sleep_disturbances')),
+                    
+                    # 5. SKIN-RELATED SYMPTOMS
+                    skin_tags=to_bool(row.get('Skin Tags')) or to_bool(row.get('skin_tags')),
+                    dark_patches=to_bool(row.get('Dark Patches')) or to_bool(row.get('dark_patches')),
+                    persistent_acne=to_bool(row.get('Persistent Acne')) or to_bool(row.get('persistent_acne')),
+                    
+                    # 6. OTHER GENERAL SYMPTOMS
+                    fatigue_severity=safe_int(row.get('Fatigue Severity')) or safe_int(row.get('fatigue_severity')),
+                    low_energy=safe_int(row.get('Low Energy')) or safe_int(row.get('low_energy')),
+                    sugar_cravings=safe_int(row.get('Sugar Cravings')) or safe_int(row.get('sugar_cravings'))
+                )
+                
+                db.session.add(survey)
+                created_count += 1
+                
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+                skipped_count += 1
+                continue
+        
+        # Commit all changes
+        db.session.commit()
+        
+        # Build success message based on mode
+        if auto_create_profiles:
+            message = f"Successfully imported symptom data CSV file (auto-created {profiles_created} anonymous profiles)."
+        else:
+            message = f"Successfully imported symptom data CSV file."
+        
+        if errors:
+            message += f" Some rows had errors and were skipped."
+        
+        result = {
+            "message": message,
+            "created": created_count,
+            "skipped": skipped_count,
+            "errors": errors[:10]  # Return first 10 errors
+        }
+        
+        if auto_create_profiles:
+            result["profiles_created"] = profiles_created
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to process CSV: {str(e)}"}), 500
+
 
 @admin_bp.route("/profile/<int:profile_id>/edit", methods=["GET"])
 @login_required
