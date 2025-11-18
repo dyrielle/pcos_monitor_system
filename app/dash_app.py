@@ -3,7 +3,8 @@ from dash import html, dcc, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from .models import SurveyResponse
+from flask_login import current_user
+from .models import SurveyResponse, StudentProfile
 
 def init_dashboard(server):
     dash_app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard/",
@@ -25,14 +26,14 @@ def init_dashboard(server):
         # Header Section
         html.Div([
             html.Div([
-                html.H1("PCOS Analytics Dashboard", 
+                html.H1(id="dashboard-title", 
                        style={
                            'color': NAVY,
                            'marginBottom': '0.5rem',
                            'fontWeight': '700',
                            'fontSize': '2rem'
                        }),
-                html.P("Interactive visualization for health survey metrics.",
+                html.P(id="dashboard-subtitle",
                       style={
                           'color': MUTED,
                           'fontSize': '1.1rem',
@@ -51,6 +52,9 @@ def init_dashboard(server):
 
         # Main Content Container
         html.Div([
+            # Stats Cards Row (for regular users)
+            html.Div(id='stats-cards', style={'marginBottom': '1.5rem'}),
+            
             # Metric Selection Card
             html.Div([
                 html.Div([
@@ -142,15 +146,185 @@ def init_dashboard(server):
         'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     })
 
+    # Callback to update title based on user type
+    @dash_app.callback(
+        [Output("dashboard-title", "children"),
+         Output("dashboard-subtitle", "children")],
+        Input("metric-select", "value")
+    )
+    def update_header(metric):
+        if current_user.is_authenticated and not current_user.is_admin:
+            title = "My Health Dashboard"
+            subtitle = "Track your personal health metrics and progress over time."
+        else:
+            title = "PCOS Analytics Dashboard"
+            subtitle = "Interactive visualization for health survey metrics."
+        return title, subtitle
+
+    # Callback to show stats cards for regular users
+    @dash_app.callback(
+        Output("stats-cards", "children"),
+        Input("metric-select", "value")
+    )
+    def update_stats_cards(metric):
+        if not current_user.is_authenticated or current_user.is_admin:
+            return html.Div()  # No stats cards for admin
+        
+        profile = current_user.profile
+        if not profile:
+            return html.Div()
+        
+        responses = SurveyResponse.query.filter_by(profile_id=profile.id).all()
+        
+        if not responses:
+            return html.Div([
+                html.Div([
+                    html.I(className="bi bi-info-circle", style={'fontSize': '3rem', 'color': MUTED}),
+                    html.P("No data yet. Submit your first health entry to see your statistics!", 
+                           style={'marginTop': '1rem', 'color': MUTED, 'fontSize': '1.1rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'padding': '3rem',
+                    'borderRadius': '14px',
+                    'border': f'1px solid #e5e7eb',
+                    'boxShadow': '0 1px 3px rgba(0,0,0,0.1)',
+                    'textAlign': 'center'
+                })
+            ])
+        
+        # Calculate averages
+        df = pd.DataFrame([{
+            "fatigue": r.fatigue,
+            "mood_swings": r.mood_swings,
+            "perceived_academic_stress": r.perceived_academic_stress,
+            "sleep_quality": r.sleep_quality
+        } for r in responses])
+        
+        avg_fatigue = df['fatigue'].mean() if not df['fatigue'].isna().all() else 0
+        avg_mood = df['mood_swings'].mean() if not df['mood_swings'].isna().all() else 0
+        avg_stress = df['perceived_academic_stress'].mean() if not df['perceived_academic_stress'].isna().all() else 0
+        avg_sleep = df['sleep_quality'].mean() if not df['sleep_quality'].isna().all() else 0
+        total_entries = len(responses)
+        
+        # Get latest entry date
+        latest_date = max([r.date for r in responses]).strftime("%B %d, %Y") if responses else "N/A"
+        
+        return html.Div([
+            html.Div([
+                # Stat Card 1
+                html.Div([
+                    html.Div([
+                        html.I(className="bi bi-battery-charging", 
+                               style={'fontSize': '2.5rem', 'color': PILL_RED, 'marginBottom': '0.5rem'}),
+                        html.H6("Avg Fatigue", style={'color': MUTED, 'marginBottom': '0.5rem', 'fontSize': '0.9rem'}),
+                        html.H3(f"{avg_fatigue:.1f}", style={'color': NAVY, 'margin': '0', 'fontWeight': '700'}),
+                        html.Small("out of 5", style={'color': MUTED})
+                    ], style={'textAlign': 'center', 'padding': '1.5rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'borderRadius': '12px',
+                    'border': f'2px solid {PILL_RED}',
+                    'boxShadow': '0 2px 6px rgba(0,0,0,0.08)',
+                    'flex': '1'
+                }),
+                
+                # Stat Card 2
+                html.Div([
+                    html.Div([
+                        html.I(className="bi bi-emoji-smile", 
+                               style={'fontSize': '2.5rem', 'color': PILL_YELLOW, 'marginBottom': '0.5rem'}),
+                        html.H6("Avg Mood", style={'color': MUTED, 'marginBottom': '0.5rem', 'fontSize': '0.9rem'}),
+                        html.H3(f"{avg_mood:.1f}", style={'color': NAVY, 'margin': '0', 'fontWeight': '700'}),
+                        html.Small("out of 5", style={'color': MUTED})
+                    ], style={'textAlign': 'center', 'padding': '1.5rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'borderRadius': '12px',
+                    'border': f'2px solid {PILL_YELLOW}',
+                    'boxShadow': '0 2px 6px rgba(0,0,0,0.08)',
+                    'flex': '1'
+                }),
+                
+                # Stat Card 3
+                html.Div([
+                    html.Div([
+                        html.I(className="bi bi-book", 
+                               style={'fontSize': '2.5rem', 'color': PILL_BLUE, 'marginBottom': '0.5rem'}),
+                        html.H6("Avg Stress", style={'color': MUTED, 'marginBottom': '0.5rem', 'fontSize': '0.9rem'}),
+                        html.H3(f"{avg_stress:.1f}", style={'color': NAVY, 'margin': '0', 'fontWeight': '700'}),
+                        html.Small("out of 5", style={'color': MUTED})
+                    ], style={'textAlign': 'center', 'padding': '1.5rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'borderRadius': '12px',
+                    'border': f'2px solid {PILL_BLUE}',
+                    'boxShadow': '0 2px 6px rgba(0,0,0,0.08)',
+                    'flex': '1'
+                }),
+                
+                # Stat Card 4
+                html.Div([
+                    html.Div([
+                        html.I(className="bi bi-moon-stars", 
+                               style={'fontSize': '2.5rem', 'color': PILL_GREEN, 'marginBottom': '0.5rem'}),
+                        html.H6("Avg Sleep", style={'color': MUTED, 'marginBottom': '0.5rem', 'fontSize': '0.9rem'}),
+                        html.H3(f"{avg_sleep:.1f}", style={'color': NAVY, 'margin': '0', 'fontWeight': '700'}),
+                        html.Small("out of 5", style={'color': MUTED})
+                    ], style={'textAlign': 'center', 'padding': '1.5rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'borderRadius': '12px',
+                    'border': f'2px solid {PILL_GREEN}',
+                    'boxShadow': '0 2px 6px rgba(0,0,0,0.08)',
+                    'flex': '1'
+                }),
+                
+                # Stat Card 5
+                html.Div([
+                    html.Div([
+                        html.I(className="bi bi-calendar-check", 
+                               style={'fontSize': '2.5rem', 'color': '#8b5cf6', 'marginBottom': '0.5rem'}),
+                        html.H6("Total Entries", style={'color': MUTED, 'marginBottom': '0.5rem', 'fontSize': '0.9rem'}),
+                        html.H3(f"{total_entries}", style={'color': NAVY, 'margin': '0', 'fontWeight': '700'}),
+                        html.Small(f"Latest: {latest_date}", style={'color': MUTED, 'fontSize': '0.75rem'})
+                    ], style={'textAlign': 'center', 'padding': '1.5rem'})
+                ], style={
+                    'background': '#ffffff',
+                    'borderRadius': '12px',
+                    'border': '2px solid #8b5cf6',
+                    'boxShadow': '0 2px 6px rgba(0,0,0,0.08)',
+                    'flex': '1'
+                })
+                
+            ], style={
+                'display': 'flex',
+                'gap': '1rem',
+                'flexWrap': 'wrap'
+            })
+        ])
+
     @dash_app.callback(Output("time-series", "figure"), Input("metric-select", "value"))
     def update_time_series(metric):
-        responses = SurveyResponse.query.all()
+        # Filter data based on user type
+        if current_user.is_authenticated and not current_user.is_admin:
+            # Regular user: show only their data
+            profile = current_user.profile
+            if profile:
+                responses = SurveyResponse.query.filter_by(profile_id=profile.id).all()
+            else:
+                responses = []
+        else:
+            # Admin or anonymous: show all data
+            responses = SurveyResponse.query.all()
 
         if not responses:
             # Create empty figure with custom styling
+            is_regular_user = current_user.is_authenticated and not current_user.is_admin
+            empty_message = "No data available yet. Submit your first health entry!" if is_regular_user else "No data available yet. Submit your first survey response!"
+            
             fig = go.Figure()
             fig.add_annotation(
-                text="No data available yet. Submit your first survey response!",
+                text=empty_message,
                 xref="paper",
                 yref="paper",
                 x=0.5,
@@ -184,6 +358,10 @@ def init_dashboard(server):
         df = df.sort_values(by='date')
         df.rename(columns={"date": "Date", metric: "Value"}, inplace=True)
 
+        # Determine if user is regular user or admin
+        is_regular_user = current_user.is_authenticated and not current_user.is_admin
+        chart_title_prefix = "Your " if is_regular_user else ""
+
         # Determine color based on metric
         metric_colors = {
             'fatigue': PILL_RED,
@@ -208,7 +386,7 @@ def init_dashboard(server):
 
         fig.update_layout(
             title={
-                'text': f"{metric.replace('_', ' ').title()} Over Time",
+                'text': f"{chart_title_prefix}{metric.replace('_', ' ').title()} Over Time",
                 'font': {'size': 22, 'color': NAVY, 'family': 'inherit'},
                 'x': 0,
                 'xanchor': 'left'

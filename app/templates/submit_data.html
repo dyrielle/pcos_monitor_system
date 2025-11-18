@@ -11,17 +11,21 @@
     <form method="POST" action="{{ url_for('main.submit_data') }}">
 
       <!-- Academic Record -->
-      <div class="card mb-4">
-        <div class="card-header"><strong>Academic Record (optional)</strong></div>
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-info text-white">
+          <strong><i class="bi bi-mortarboard-fill"></i> Academic Record (optional)</strong>
+        </div>
         <div class="card-body">
 
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
 
             <div class="col-md-4">
               <label class="form-label">Academic Year</label>
               <select class="form-select" name="academic_year">
                 <option value="">-- Select AY --</option>
+                <option value="AY 2024-2025">AY 2024-2025</option>
                 <option value="AY 2025-2026">AY 2025-2026</option>
+                <option value="AY 2026-2027">AY 2026-2027</option>
               </select>
             </div>
 
@@ -31,6 +35,7 @@
                 <option value="">-- Select --</option>
                 <option value="1st Semester">1st Semester</option>
                 <option value="2nd Semester">2nd Semester</option>
+                <option value="Summer">Summer</option>
               </select>
             </div>
 
@@ -45,67 +50,366 @@
 
           </div>
 
-          <div class="row g-3 mt-3">
-            <div class="col-md-3">
-              <label class="form-label">GPA</label>
-              <input type="number" step="0.01" min="0" max="5" class="form-control" name="gpa">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Attendance %</label>
-              <input type="number" step="0.1" min="0" max="100" class="form-control" name="attendance">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Study Hours/week</label>
-              <input type="number" step="0.1" min="0" class="form-control" name="study_hours">
-            </div>
-          </div>
-
-          <small class="text-muted">Note: Academic record fields are optional but recommended each grading period.</small>
-        </div>
-      </div>
-
-      <!-- Short Survey -->
-      <div class="card mb-4">
-        <div class="card-header"><strong>Short Survey (today)</strong></div>
-        <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">Fatigue (1–5)</label>
-              <input type="number" name="fatigue" class="form-control" min="1" max="5" required>
+            <div class="col-md-4">
+              <label class="form-label">GPA Range</label>
+              <select class="form-select" name="gpa">
+                <option value="">-- Select --</option>
+                <option value="1.00">1.00 - 1.25 (Excellent)</option>
+                <option value="1.50">1.26 - 1.50 (Very Good)</option>
+                <option value="1.75">1.51 - 1.75 (Good)</option>
+                <option value="2.00">1.76 - 2.00 (Above Average)</option>
+                <option value="2.25">2.01 - 2.25 (Average)</option>
+                <option value="2.50">2.26 - 2.50 (Fair)</option>
+                <option value="2.75">2.51 - 2.75 (Below Average)</option>
+                <option value="3.00">2.76 - 3.00 (Passing)</option>
+              </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Mood Swings (1–5)</label>
-              <input type="number" name="mood" class="form-control" min="1" max="5" required>
+            <div class="col-md-4">
+              <label class="form-label">Attendance Rate</label>
+              <select class="form-select" name="attendance">
+                <option value="">-- Select --</option>
+                <option value="95">90-100% (Excellent)</option>
+                <option value="85">80-89% (Very Good)</option>
+                <option value="75">70-79% (Good)</option>
+                <option value="65">60-69% (Fair)</option>
+                <option value="55">50-59% (Poor)</option>
+                <option value="45">Below 50%</option>
+              </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Sleep Quality (1–5)</label>
-              <input type="number" name="sleepq" class="form-control" min="1" max="5" required>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Academic Stress (1–5)</label>
-              <input type="number" name="stress" class="form-control" min="1" max="5" required>
+            <div class="col-md-4">
+              <label class="form-label">Study Hours/week</label>
+              <select class="form-select" name="study_hours">
+                <option value="">-- Select --</option>
+                <option value="2">0-5 hours</option>
+                <option value="7">6-10 hours</option>
+                <option value="12">11-15 hours</option>
+                <option value="17">16-20 hours</option>
+                <option value="22">21-25 hours</option>
+                <option value="27">26-30 hours</option>
+                <option value="35">More than 30 hours</option>
+              </select>
             </div>
           </div>
 
-          <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" id="irregular" name="irregular">
-            <label class="form-check-label" for="irregular">Irregular menstruation recently</label>
-          </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="acne" name="acne">
-            <label class="form-check-label" for="acne">Notable acne flare-up</label>
-          </div>
-
-          <div>
-            <label class="form-label">Notes (optional)</label>
-            <textarea class="form-control" name="notes" rows="3" placeholder="Anything you want to add…"></textarea>
-          </div>
+          <small class="text-muted"><i class="bi bi-info-circle"></i> Note: Academic record fields are optional but recommended each grading period.</small>
         </div>
       </div>
 
-      <div class="d-flex gap-2">
-        <button class="btn btn-success">Save Entry</button>
-        <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">Back to Home</a>
+      <!-- PCOS Symptoms Survey -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <strong><i class="bi bi-clipboard2-pulse"></i> PCOS Symptoms Assessment</strong>
+          <p class="mb-0 small mt-1">Rate your current symptoms (helps improve PCOS prediction accuracy)</p>
+        </div>
+        <div class="card-body">
+          
+          <!-- 1. Reproductive / Menstrual Symptoms -->
+          <h6 class="text-primary mb-3 pb-2 border-bottom"><i class="bi bi-calendar-event"></i> 1. Reproductive / Menstrual Symptoms</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="oligomenorrhea" name="oligomenorrhea">
+                <label class="form-check-label" for="oligomenorrhea">
+                  <strong>Oligomenorrhea</strong>
+                </label>
+              </div>
+              <small class="text-muted">Few periods per year (≤8 per year)</small>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="amenorrhea" name="amenorrhea">
+                <label class="form-check-label" for="amenorrhea">
+                  <strong>Amenorrhea</strong>
+                </label>
+              </div>
+              <small class="text-muted">No period for 3+ months</small>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="heavy_menstruation" name="heavy_menstruation">
+                <label class="form-check-label" for="heavy_menstruation">
+                  <strong>Heavy/Prolonged Periods</strong>
+                </label>
+              </div>
+              <small class="text-muted">Excessive bleeding</small>
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label"><strong>Irregular Menstrual Cycles</strong></label>
+              <select class="form-select" name="irregular_cycles">
+                <option value="">-- Select --</option>
+                <option value="1">Never</option>
+                <option value="2">Rarely</option>
+                <option value="3">Sometimes</option>
+                <option value="4">Often</option>
+                <option value="5">Always</option>
+              </select>
+              <small class="text-muted">Delayed or unpredictable periods</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"><strong>Pelvic Pain</strong></label>
+              <select class="form-select" name="pelvic_pain">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Pain in pelvic region</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- 2. Hormonal / Hyperandrogenism Symptoms -->
+          <h6 class="text-warning mb-3 pb-2 border-bottom"><i class="bi bi-droplet"></i> 2. Hormonal / Hyperandrogenism Symptoms</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="alopecia" name="alopecia">
+                <label class="form-check-label" for="alopecia">
+                  <strong>Hair Loss/Thinning</strong>
+                </label>
+              </div>
+              <small class="text-muted">Scalp hair thinning</small>
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label"><strong>Acne Severity</strong></label>
+              <select class="form-select" name="acne_severity">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Persistent or cystic acne</small>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"><strong>Hirsutism</strong></label>
+              <select class="form-select" name="hirsutism">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Excess facial/body hair</small>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"><strong>Oily Skin</strong></label>
+              <select class="form-select" name="oily_skin">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Excessively oily skin</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- 3. Metabolic Symptoms -->
+          <h6 class="text-success mb-3 pb-2 border-bottom"><i class="bi bi-speedometer2"></i> 3. Metabolic Symptoms</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="insulin_resistance" name="insulin_resistance">
+                <label class="form-check-label" for="insulin_resistance">
+                  <strong>Insulin Resistance</strong>
+                </label>
+              </div>
+              <small class="text-muted">Diagnosed or suspected</small>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="elevated_blood_sugar" name="elevated_blood_sugar">
+                <label class="form-check-label" for="elevated_blood_sugar">
+                  <strong>Elevated Blood Sugar</strong>
+                </label>
+              </div>
+              <small class="text-muted">Diagnosed or suspected</small>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acanthosis_nigricans" name="acanthosis_nigricans">
+                <label class="form-check-label" for="acanthosis_nigricans">
+                  <strong>Dark Skin Patches</strong>
+                </label>
+              </div>
+              <small class="text-muted">Neck, armpits, groin</small>
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label"><strong>Weight Gain</strong></label>
+              <select class="form-select" name="weight_gain">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Slight</option>
+                <option value="3">Moderate</option>
+                <option value="4">Significant</option>
+                <option value="5">Very Significant</option>
+              </select>
+              <small class="text-muted">Unexplained weight gain</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- 4. Emotional / Psychological Symptoms -->
+          <h6 class="text-danger mb-3 pb-2 border-bottom"><i class="bi bi-heart"></i> 4. Emotional / Psychological Symptoms</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label"><strong>Mood Swings</strong></label>
+              <select class="form-select" name="mood_swings_severity">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Emotional fluctuations</small>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"><strong>Anxiety</strong></label>
+              <select class="form-select" name="anxiety">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Anxiety levels</small>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"><strong>Depression</strong></label>
+              <select class="form-select" name="depression">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Depressive symptoms</small>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"><strong>Sleep Disturbances</strong></label>
+              <select class="form-select" name="sleep_disturbances">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Sleep quality issues</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- 5. Skin-Related Symptoms -->
+          <h6 class="text-info mb-3 pb-2 border-bottom"><i class="bi bi-asterisk"></i> 5. Skin-Related Symptoms</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="skin_tags" name="skin_tags">
+                <label class="form-check-label" for="skin_tags">
+                  <strong>Skin Tags</strong>
+                </label>
+              </div>
+              <small class="text-muted">On neck or armpits</small>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="dark_patches" name="dark_patches">
+                <label class="form-check-label" for="dark_patches">
+                  <strong>Dark Patches (Acanthosis Nigricans)</strong>
+                </label>
+              </div>
+              <small class="text-muted">Darkened skin areas</small>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="persistent_acne" name="persistent_acne">
+                <label class="form-check-label" for="persistent_acne">
+                  <strong>Persistent/Long-term Acne</strong>
+                </label>
+              </div>
+              <small class="text-muted">Chronic acne issues</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- 6. Other General Symptoms -->
+          <h6 class="text-secondary mb-3 pb-2 border-bottom"><i class="bi bi-lightning"></i> 6. Other General Symptoms</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label"><strong>Fatigue Severity</strong></label>
+              <select class="form-select" name="fatigue_severity">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Overall tiredness</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"><strong>Low Energy</strong></label>
+              <select class="form-select" name="low_energy">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Energy levels</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"><strong>Sugar/Carb Cravings</strong></label>
+              <select class="form-select" name="sugar_cravings">
+                <option value="">-- Select --</option>
+                <option value="1">None</option>
+                <option value="2">Mild</option>
+                <option value="3">Moderate</option>
+                <option value="4">Severe</option>
+                <option value="5">Very Severe</option>
+              </select>
+              <small class="text-muted">Food cravings intensity</small>
+            </div>
+          </div>
+
+          <div class="alert alert-info border-0 mt-3">
+            <i class="bi bi-info-circle"></i>
+            <small>
+              <strong>Note:</strong> This detailed symptom data will be used to improve PCOS prediction accuracy.
+              All information is confidential and used for research purposes only.
+            </small>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-success btn-lg"><i class="bi bi-check-circle"></i> Save Entry</button>
+        <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('main.index') }}"><i class="bi bi-house"></i> Back to Home</a>
       </div>
 
     </form>

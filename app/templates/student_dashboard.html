@@ -2,27 +2,42 @@
 {% block content %}
 
 <div class="container-fluid mt-4">
-    <h2 class="mb-4">My Health & Academic Dashboard</h2>
-    <p class="text-muted">Welcome, {{ personal_data.name }}! Here's your personal health and academic progress overview.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-person-circle"></i> My Health Dashboard</h2>
+            <p class="text-muted">Welcome, {{ personal_data.name }}! Track your health journey and progress.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('main.submit_data') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Submit New Entry
+            </a>
+        </div>
+    </div>
 
     <hr>
 
     <!-- PROFILE SUMMARY CARDS -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 border-primary">
                 <div class="card-body text-center">
+                    <div class="mb-2">
+                        <i class="bi bi-clipboard2-pulse-fill text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
                     <h6 class="text-muted mb-2">Clinical Diagnosis</h6>
-                    <h4 class="fw-bold text-primary">{{ personal_data.clinical_diagnosis }}</h4>
+                    <h4 class="fw-bold text-primary mb-0">{{ personal_data.clinical_diagnosis }}</h4>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 border-info">
                 <div class="card-body text-center">
+                    <div class="mb-2">
+                        <i class="bi bi-lightbulb-fill text-info" style="font-size: 2.5rem;"></i>
+                    </div>
                     <h6 class="text-muted mb-2">PCOS Awareness Score</h6>
-                    <h4 class="fw-bold text-info">
+                    <h4 class="fw-bold text-info mb-1">
                         {{ "%.2f"|format(personal_data.awareness_score) if personal_data.awareness_score else "N/A" }}
                     </h4>
                     <small class="text-muted">Cohort avg: {{ cohort_stats.avg_awareness or "N/A" }}</small>
@@ -31,10 +46,13 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 border-warning">
                 <div class="card-body text-center">
+                    <div class="mb-2">
+                        <i class="bi bi-book-fill text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
                     <h6 class="text-muted mb-2">Academic Pressure</h6>
-                    <h4 class="fw-bold text-warning">
+                    <h4 class="fw-bold text-warning mb-1">
                         {{ "%.2f"|format(personal_data.academic_pressure_score) if personal_data.academic_pressure_score else "N/A" }}
                     </h4>
                     <small class="text-muted">Cohort avg: {{ cohort_stats.avg_academic_pressure or "N/A" }}</small>
@@ -43,10 +61,13 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 border-danger">
                 <div class="card-body text-center">
+                    <div class="mb-2">
+                        <i class="bi bi-activity text-danger" style="font-size: 2.5rem;"></i>
+                    </div>
                     <h6 class="text-muted mb-2">Symptoms Score</h6>
-                    <h4 class="fw-bold text-danger">
+                    <h4 class="fw-bold text-danger mb-1">
                         {{ "%.2f"|format(personal_data.symptoms_score) if personal_data.symptoms_score else "N/A" }}
                     </h4>
                     <small class="text-muted">Cohort avg: {{ cohort_stats.avg_symptoms or "N/A" }}</small>
@@ -55,30 +76,80 @@
         </div>
     </div>
 
-    <!-- ACADEMIC STATISTICS -->
+    <!-- QUICK STATS ROW -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <strong>📚 Academic Statistics</strong>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <strong><i class="bi bi-mortarboard-fill"></i> Academic Statistics</strong>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-3 text-center">
-                            <h6 class="text-muted">Average GPA</h6>
-                            <h4>{{ academic_stats.avg_gpa or "N/A" }}</h4>
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Average GPA</h6>
+                                <h3 class="mb-0 text-primary">{{ "%.2f"|format(academic_stats.avg_gpa) if academic_stats.avg_gpa else "N/A" }}</h3>
+                            </div>
                         </div>
-                        <div class="col-md-3 text-center">
-                            <h6 class="text-muted">Average Attendance</h6>
-                            <h4>{{ academic_stats.avg_attendance or "N/A" }}%</h4>
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Attendance</h6>
+                                <h3 class="mb-0 text-success">{{ "%.1f"|format(academic_stats.avg_attendance) if academic_stats.avg_attendance else "N/A" }}%</h3>
+                            </div>
                         </div>
-                        <div class="col-md-3 text-center">
-                            <h6 class="text-muted">Avg Study Hours/Week</h6>
-                            <h4>{{ academic_stats.avg_study_hours or "N/A" }}</h4>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Study Hrs/Week</h6>
+                                <h3 class="mb-0 text-info">{{ "%.1f"|format(academic_stats.avg_study_hours) if academic_stats.avg_study_hours else "N/A" }}</h3>
+                            </div>
                         </div>
-                        <div class="col-md-3 text-center">
-                            <h6 class="text-muted">Total Records</h6>
-                            <h4>{{ academic_stats.total_records }}</h4>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Total Records</h6>
+                                <h3 class="mb-0 text-secondary">{{ academic_stats.total_records }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <strong><i class="bi bi-heart-pulse-fill"></i> Health Statistics</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1 small">Avg Fatigue</h6>
+                                <h3 class="mb-0 text-danger">{{ "%.1f"|format(survey_stats.avg_fatigue) if survey_stats.avg_fatigue else "N/A" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1 small">Avg Mood</h6>
+                                <h3 class="mb-0 text-warning">{{ "%.1f"|format(survey_stats.avg_mood) if survey_stats.avg_mood else "N/A" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1 small">Avg Sleep</h6>
+                                <h3 class="mb-0 text-info">{{ "%.1f"|format(survey_stats.avg_sleep) if survey_stats.avg_sleep else "N/A" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Avg Stress</h6>
+                                <h3 class="mb-0 text-danger">{{ "%.1f"|format(survey_stats.avg_stress) if survey_stats.avg_stress else "N/A" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6 class="text-muted mb-1">Last Entry</h6>
+                                <h6 class="mb-0 fw-bold text-primary small">{{ last_submission or "None yet" }}</h6>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -86,68 +157,52 @@
         </div>
     </div>
 
-    <!-- HEALTH STATISTICS -->
+    <!-- CHARTS SECTION -->
     <div class="row mb-4">
-        <div class="col-md-12">
+        <!-- ACADEMIC TIMELINE CHART -->
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <strong>❤️ Health Statistics</strong>
+                    <strong><i class="bi bi-graph-up"></i> Academic Performance Over Time</strong>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Avg Fatigue</h6>
-                            <h4>{{ survey_stats.avg_fatigue or "N/A" }}</h4>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Avg Mood</h6>
-                            <h4>{{ survey_stats.avg_mood or "N/A" }}</h4>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Avg Sleep</h6>
-                            <h4>{{ survey_stats.avg_sleep or "N/A" }}</h4>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Avg Stress</h6>
-                            <h4>{{ survey_stats.avg_stress or "N/A" }}</h4>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Total Surveys</h6>
-                            <h4>{{ survey_stats.total_surveys }}</h4>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <h6 class="text-muted">Last Submission</h6>
-                            <h6 class="fw-bold text-primary">{{ last_submission or "None yet" }}</h6>
-                        </div>
-                    </div>
+                    <div id="academic_timeline_chart" style="width:100%;height:450px;"></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ACADEMIC TIMELINE CHART -->
-    <div class="row mb-4">
-        <div class="col-md-12">
+        <!-- HEALTH TIMELINE CHART -->
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <strong>📈 Academic Performance Over Time</strong>
+                    <strong><i class="bi bi-heart-pulse"></i> Health Metrics Over Time</strong>
                 </div>
                 <div class="card-body">
-                    <div id="academic_timeline_chart" style="width:100%;height:400px;"></div>
+                    <div id="health_timeline_chart" style="width:100%;height:450px;"></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- HEALTH TIMELINE CHART -->
-    <div class="row mb-4">
-        <div class="col-md-12">
+        <!-- NEW: SYMPTOM SEVERITY RADAR CHART -->
+        <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <strong>❤️ Health Metrics Over Time</strong>
+                    <strong><i class="bi bi-diagram-3"></i> Current Symptom Profile</strong>
                 </div>
                 <div class="card-body">
-                    <div id="health_timeline_chart" style="width:100%;height:400px;"></div>
+                    <div id="symptom_radar_chart" style="width:100%;height:400px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: HEALTH PROGRESS GAUGE -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong><i class="bi bi-speedometer2"></i> Overall Health Score</strong>
+                </div>
+                <div class="card-body">
+                    <div id="health_gauge_chart" style="width:100%;height:400px;"></div>
                 </div>
             </div>
         </div>
@@ -155,11 +210,11 @@
 
     <!-- ACTION BUTTONS -->
     <div class="text-center mb-4">
-        <a href="{{ url_for('main.submit_data') }}" class="btn btn-primary btn-lg mx-2">
-            📝 Submit New Entry
+        <a href="{{ url_for('main.submit_data') }}" class="btn btn-primary btn-lg mx-2 shadow">
+            <i class="bi bi-pencil-square"></i> Submit New Entry
         </a>
-        <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-lg mx-2">
-            🏠 Back to Home
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-lg mx-2">
+            <i class="bi bi-house-door"></i> Back to Home
         </a>
     </div>
 
@@ -181,8 +236,10 @@ if (academicTimeline && academicTimeline.length > 0) {
         name: 'GPA',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#4CAF50', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#667eea', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'circle' },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(102, 126, 234, 0.1)'
     };
     
     const attendanceTrace = {
@@ -191,8 +248,8 @@ if (academicTimeline && academicTimeline.length > 0) {
         name: 'Attendance %',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#2196F3', width: 2 },
-        marker: { size: 8 },
+        line: { color: '#10b981', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'square' },
         yaxis: 'y2'
     };
     
@@ -202,39 +259,50 @@ if (academicTimeline && academicTimeline.length > 0) {
         name: 'Study Hours/Week',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#FF9800', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#f59e0b', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'diamond' }
     };
     
     const academicLayout = {
-        title: '',
+        title: {
+            text: '',
+            font: { size: 16 }
+        },
         xaxis: {
             title: 'Date',
-            type: 'date'
+            type: 'date',
+            gridcolor: '#e5e7eb'
         },
         yaxis: {
             title: 'GPA / Study Hours',
-            side: 'left'
+            side: 'left',
+            gridcolor: '#e5e7eb'
         },
         yaxis2: {
             title: 'Attendance %',
             side: 'right',
             overlaying: 'y',
-            range: [0, 100]
+            range: [0, 100],
+            gridcolor: '#f3f4f6'
         },
         hovermode: 'x unified',
         showlegend: true,
         legend: {
             x: 0,
             y: 1.15,
-            orientation: 'h'
-        }
+            orientation: 'h',
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: '#e5e7eb',
+            borderwidth: 1
+        },
+        plot_bgcolor: '#fafafa',
+        paper_bgcolor: 'white'
     };
     
-    Plotly.newPlot('academic_timeline_chart', [gpaTrace, attendanceTrace, studyTrace], academicLayout, {responsive: true});
+    Plotly.newPlot('academic_timeline_chart', [gpaTrace, attendanceTrace, studyTrace], academicLayout, {responsive: true, displayModeBar: false});
 } else {
     document.getElementById('academic_timeline_chart').innerHTML = 
-        '<div class="text-center text-muted p-5">No academic records yet. <a href="{{ url_for(\'main.submit_data\') }}">Submit your first entry!</a></div>';
+        '<div class="text-center text-muted p-5"><i class="bi bi-inbox" style="font-size: 3rem;"></i><br><br>No academic records yet. <a href="{{ url_for(\'main.submit_data\') }}" class="btn btn-primary mt-2">Submit your first entry!</a></div>';
 }
 
 // ----- HEALTH TIMELINE CHART -----
@@ -249,8 +317,8 @@ if (surveyTimeline && surveyTimeline.length > 0) {
         name: 'Fatigue',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#F44336', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#ef4444', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'circle' }
     };
     
     const moodTrace = {
@@ -259,8 +327,8 @@ if (surveyTimeline && surveyTimeline.length > 0) {
         name: 'Mood Swings',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#9C27B0', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#a855f7', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'square' }
     };
     
     const sleepTrace = {
@@ -269,8 +337,8 @@ if (surveyTimeline && surveyTimeline.length > 0) {
         name: 'Sleep Quality',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#00BCD4', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#06b6d4', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'diamond' }
     };
     
     const stressTrace = {
@@ -279,33 +347,131 @@ if (surveyTimeline && surveyTimeline.length > 0) {
         name: 'Academic Stress',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#FF5722', width: 2 },
-        marker: { size: 8 }
+        line: { color: '#f97316', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'triangle-up' }
     };
     
     const healthLayout = {
-        title: '',
+        title: {
+            text: '',
+            font: { size: 16 }
+        },
         xaxis: {
             title: 'Date',
-            type: 'date'
+            type: 'date',
+            gridcolor: '#e5e7eb'
         },
         yaxis: {
             title: 'Rating (1-5)',
-            range: [0, 6]
+            range: [0, 6],
+            gridcolor: '#e5e7eb'
         },
         hovermode: 'x unified',
         showlegend: true,
         legend: {
             x: 0,
             y: 1.15,
-            orientation: 'h'
-        }
+            orientation: 'h',
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: '#e5e7eb',
+            borderwidth: 1
+        },
+        plot_bgcolor: '#fafafa',
+        paper_bgcolor: 'white'
     };
     
-    Plotly.newPlot('health_timeline_chart', [fatigueTrace, moodTrace, sleepTrace, stressTrace], healthLayout, {responsive: true});
+    Plotly.newPlot('health_timeline_chart', [fatigueTrace, moodTrace, sleepTrace, stressTrace], healthLayout, {responsive: true, displayModeBar: false});
 } else {
     document.getElementById('health_timeline_chart').innerHTML = 
-        '<div class="text-center text-muted p-5">No health surveys yet. <a href="{{ url_for(\'main.submit_data\') }}">Submit your first entry!</a></div>';
+        '<div class="text-center text-muted p-5"><i class="bi bi-inbox" style="font-size: 3rem;"></i><br><br>No health surveys yet. <a href="{{ url_for(\'main.submit_data\') }}" class="btn btn-primary mt-2">Submit your first entry!</a></div>';
+}
+
+// ----- SYMPTOM RADAR CHART -----
+const latestSymptoms = {{ latest_symptoms | tojson | default('null') }};
+
+if (latestSymptoms) {
+    const radarData = [{
+        type: 'scatterpolar',
+        r: [
+            latestSymptoms.fatigue || 0,
+            latestSymptoms.mood || 0,
+            latestSymptoms.sleep || 0,
+            latestSymptoms.stress || 0,
+            latestSymptoms.irregular || 0,
+            latestSymptoms.acne || 0
+        ],
+        theta: ['Fatigue', 'Mood Swings', 'Sleep Issues', 'Stress', 'Menstrual Irregularity', 'Acne'],
+        fill: 'toself',
+        fillcolor: 'rgba(102, 126, 234, 0.3)',
+        line: {
+            color: '#667eea',
+            width: 3
+        },
+        marker: {
+            size: 8,
+            color: '#667eea'
+        },
+        name: 'Current Symptoms'
+    }];
+
+    const radarLayout = {
+        polar: {
+            radialaxis: {
+                visible: true,
+                range: [0, 5],
+                gridcolor: '#e5e7eb'
+            },
+            bgcolor: '#fafafa'
+        },
+        showlegend: false,
+        paper_bgcolor: 'white'
+    };
+
+    Plotly.newPlot('symptom_radar_chart', radarData, radarLayout, {responsive: true, displayModeBar: false});
+} else {
+    document.getElementById('symptom_radar_chart').innerHTML = 
+        '<div class="text-center text-muted p-5"><i class="bi bi-radar" style="font-size: 3rem;"></i><br><br>No symptom data available yet.</div>';
+}
+
+// ----- HEALTH GAUGE CHART -----
+const healthScore = {{ health_score | default('null') }};
+
+if (healthScore !== null) {
+    const gaugeData = [{
+        type: "indicator",
+        mode: "gauge+number+delta",
+        value: healthScore,
+        delta: { reference: 70, increasing: { color: "#10b981" } },
+        gauge: {
+            axis: { range: [null, 100], tickwidth: 1, tickcolor: "#334155" },
+            bar: { color: healthScore >= 70 ? "#10b981" : healthScore >= 40 ? "#f59e0b" : "#ef4444" },
+            bgcolor: "white",
+            borderwidth: 2,
+            bordercolor: "#e5e7eb",
+            steps: [
+                { range: [0, 40], color: '#fee2e2' },
+                { range: [40, 70], color: '#fef3c7' },
+                { range: [70, 100], color: '#d1fae5' }
+            ],
+            threshold: {
+                line: { color: "#dc2626", width: 4 },
+                thickness: 0.75,
+                value: 70
+            }
+        },
+        title: { text: "Health Score (0-100)", font: { size: 18 } },
+        number: { font: { size: 48 } }
+    }];
+
+    const gaugeLayout = {
+        paper_bgcolor: "white",
+        font: { color: "#1f2937", family: "Arial" }
+    };
+
+    Plotly.newPlot('health_gauge_chart', gaugeData, gaugeLayout, {responsive: true, displayModeBar: false});
+} else {
+    document.getElementById('health_gauge_chart').innerHTML = 
+        '<div class="text-center text-muted p-5"><i class="bi bi-speedometer" style="font-size: 3rem;"></i><br><br>Health score will appear after data submission.</div>';
 }
 </script>
 

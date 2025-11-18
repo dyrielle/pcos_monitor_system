@@ -96,7 +96,7 @@ def submit_data():
     # SAFETY AUTO-FIX: regenerate missing profile if data was deleted
     profile = current_user.profile
     if profile is None:
-        profile = StudentProfile(user_id=current_user.id)
+        profile = StudentProfile(user_id=current_user.id, data_source='manual')
         db.session.add(profile)
         db.session.commit()
 
@@ -162,6 +162,7 @@ def submit_data():
 
         sr = SurveyResponse(
             profile_id=profile.id,
+            data_source='manual',  # Tag as manual/test account submission
             # Legacy fields
             fatigue=fatigue or 0, 
             irregular_menstruation=irregular,
@@ -208,12 +209,7 @@ def submit_data():
 @login_required
 def student_dashboard():
     """Individual student dashboard showing personal health and academic trends."""
-    # Feature disabled for regular users; keep route but redirect to main Dashboard
-    if not current_user.is_admin:
-        from flask import flash
-        flash("Personal dashboard is no longer available. Please use the Dashboard page.", "info")
-        return redirect("/dashboard/")
-
+    
     from datetime import datetime
     import pandas as pd
     import numpy as np
@@ -316,6 +312,38 @@ def student_dashboard():
     if survey_responses:
         last_submission = survey_responses[-1].date.strftime("%B %d, %Y")
     
+    # --- Latest Symptoms for Radar Chart ---
+    latest_symptoms = None
+    if survey_responses:
+        latest = survey_responses[-1]
+        latest_symptoms = {
+            "fatigue": latest.fatigue or 0,
+            "mood": latest.mood_swings or 0,
+            "sleep": latest.sleep_quality or 0,
+            "stress": latest.perceived_academic_stress or 0,
+            "irregular": 3 if latest.irregular_menstruation else 0,
+            "acne": 3 if latest.acne else 0
+        }
+    
+    # --- Health Score Calculation ---
+    health_score = None
+    if survey_responses:
+        # Calculate health score (0-100, higher is better)
+        # Invert scores since lower fatigue/stress/mood swings is better
+        avg_fatigue = survey_stats["avg_fatigue"] or 3
+        avg_mood = survey_stats["avg_mood"] or 3
+        avg_sleep = survey_stats["avg_sleep"] or 3  # Higher sleep quality is better
+        avg_stress = survey_stats["avg_stress"] or 3
+        
+        # Calculate score: sleep quality counts positive, others count negative
+        health_score = round(
+            ((5 - avg_fatigue) * 20 +  # 0-20 points
+             (5 - avg_mood) * 20 +      # 0-20 points
+             avg_sleep * 20 +            # 0-20 points (higher is better)
+             (5 - avg_stress) * 20),     # 0-20 points
+            1
+        )
+    
     return render_template("student_dashboard.html",
                           personal_data=personal_data,
                           academic_timeline=academic_timeline,
@@ -323,7 +351,9 @@ def student_dashboard():
                           survey_timeline=survey_timeline,
                           survey_stats=survey_stats,
                           cohort_stats=cohort_stats,
-                          last_submission=last_submission)
+                          last_submission=last_submission,
+                          latest_symptoms=latest_symptoms,
+                          health_score=health_score)
 
 
 @main_bp.route("/api/profile/<int:profile_id>/data")
@@ -382,6 +412,7 @@ def predict_pcos():
             "profile": profile,
             "prediction": prediction_result,
             "recommendations": recommendations,
+            "survey_response": latest_survey,  # Add survey data for detailed symptom display
             "personal_data": {
                 "name": profile.name or "Student",
                 "age": profile.age,
